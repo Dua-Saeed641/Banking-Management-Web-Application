@@ -1,13 +1,11 @@
-import os
+import os 
 
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+BASE_DIR=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-class Config:
-    SECRET_KEY = "your-secret-key"
+#configuration class
+class LocalDevelopmentConfig:
+    DEBUG=True 
+    SQLALCHEMY_TRACK_MODIFICATIONS=False 
 
-    SQLALCHEMY_DATABASE_URI = (
-        "sqlite:///" +
-        os.path.join(BASE_DIR, "..", "db_directory", "atm_simulation.sqlite3")
-    )
-
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    #DB LOCATION
+    SQLALCHEMY_DATABASE_URI=("sqlite:///"+os.path.join(BASE_DIR,"db_directory","atm_simulation.sqlite3"))
