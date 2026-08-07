@@ -1,4 +1,4 @@
-#this file is made to simply import it db object everywhere to follow the DRY principle
+#this file is made to simply import db object everywhere to follow the DRY principle
 
 
 from flask_sqlalchemy import SQLAlchemy 
