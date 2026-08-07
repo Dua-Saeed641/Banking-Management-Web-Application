@@ -7,7 +7,7 @@ from application.config import LocalDevelopmentConfig
 from application.database import db
 from application.database import login_manager
 
-from application.models import User  
+from application.models import Admin  
 
 app=None
 #building application inside one function for better architecture,easier testing
