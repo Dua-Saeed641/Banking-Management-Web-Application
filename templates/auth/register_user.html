@@ -20,63 +20,57 @@
 <body>
 
 <div class="container mt-5">
-
     <div class="row justify-content-center">
-
         <div class="col-md-6">
-
             <div class="card shadow">
-
                 <div class="card-body">
-
-                    <h2 class="text-center mb-4">
-                        User Registration
-                    </h2>
-
+                    <h2 class="text-center mb-4"> User Registration</h2>
                     <form method="POST">
 
                         <div class="mb-3">
-
-                            <label class="form-label">
-                                Name
-                            </label>
-
+                            <label class="form-label">Name</label>
                             <input
                                 type="text"
                                 name="name"
                                 class="form-control"
-                                required
-                            >
-
+                                value="{{name or ''}}"
+                                required>
                         </div>
 
                         <div class="mb-3">
-
-                            <label class="form-label">
-                                Email
-                            </label>
-
+                            <label class="form-label">Email</label>
                             <input
                                 type="email"
                                 name="email"
                                 class="form-control"
-                                required
-                            >
-
+                                value="{{email or ''}}"
+                                required>
                         </div>
 
                         <div class="mb-3">
-
-                            <label class="form-label">
-                                Password
-                            </label>
-
+                            <label class="form-label"> Password</label>
+                            {% if password_error %}
+                                <div class="alert alert-danger">
+                                    {{ password_error }}
+                                </div>
+                            {% endif %}
+                        
                             <input
                                 type="password"
                                 name="password"
                                 class="form-control"
-                                required
-                            >
+                                required>
+                            
+                            <div class="form-text">
+                                Your password must contain:
+                                <ul class="mb-0">
+                                    <li>At least 8 characters</li>
+                                    <li>At least 1 uppercase letter</li>
+                                    <li>At least 1 lowercase letter</li>
+                                    <li>At least 1 number</li>
+                                    <li>At least 1 special character (@, #, $, %, etc.)</li>
+                                </ul>
+                            </div>
 
                         </div>
 

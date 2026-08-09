@@ -20,23 +20,21 @@
 <body>
 
 <div class="container mt-5">
-
     <div class="row justify-content-center">
-
         <div class="col-md-5">
-
             <div class="card shadow">
-
                 <div class="card-body">
-
                     <h2 class="text-center mb-4">
                         {{ role }} Login
                     </h2>
+                    {% if login_error %}
+                        <div class="alert alert-danger">
+                            {{ login_error }}
+                        </div>
+                    {% endif %}
 
                     <form method="POST">
-
                         <div class="mb-3">
-
                             <label class="form-label">
                                 Email
                             </label>
