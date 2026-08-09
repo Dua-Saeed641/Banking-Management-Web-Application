@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+    <div class="card shadow">
+
+        <div class="card-body">
+
+            <h2>Withdraw Money</h2>
+
+            <hr>
+
+            <p>
+                <strong>Current Balance:</strong>
+                ₹{{ "%.2f"|format(account.balance) }}
+            </p>
+
+            <p>
+                <strong>Minimum Balance Required:</strong>
+                ₹{{ "%.2f"|format(account.minimum_balance) }}
+            </p>
+
+            {% if withdraw_error %}
+                <div class="alert alert-danger">
+                    {{ withdraw_error }}
+                </div>
+            {% endif %}
+
+            <form method="POST">
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Withdrawal Amount
+                    </label>
+
+                    <input
+                        type="number"
+                        name="amount"
+                        class="form-control"
+                        min="1"
+                        step="0.01"
+                        required
+                    >
+
+                </div>
+
+                <button
+                    type="submit"
+                    class="btn btn-danger">
+                    Withdraw
+                </button>
+
+                <a
+                    href="{{ url_for('user_dashboard') }}"
+                    class="btn btn-secondary">
+                    Cancel
+                </a>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

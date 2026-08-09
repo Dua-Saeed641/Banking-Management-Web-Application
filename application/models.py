@@ -61,7 +61,7 @@ class BankAccount(db.Model):
     account_number = db.Column(db.String(20),unique=True,nullable=False)
     account_type = db.Column(db.String(20),nullable=False,default="Savings")
     balance = db.Column(db.Float,nullable=False,default=0.0)
-    minimum_balance = db.Column(db.Float,nullable=False,default=0.0)
+    minimum_balance = db.Column(db.Float,nullable=False,default=1000.0)
     ifsc_code = db.Column(db.String(20),nullable=False)
     opening_date = db.Column(db.Date,default=datetime.now(timezone.utc))
     status = db.Column(db.String(20),nullable=False,default="Active")

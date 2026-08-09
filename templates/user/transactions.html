@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+    <h2>Transaction History</h2>
+
+    <hr>
+
+    {% if transactions %}
+
+    <table border="1" cellpadding="10" cellspacing="0" width="100%">
+
+        <thead>
+            <tr>
+                <th>Transaction ID</th>
+                <th>Transaction Type</th>
+                <th>Amount</th>
+                <th>Balance After Transaction</th>
+                <th>Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for transaction in transactions %}
+
+            <tr>
+
+                <td>
+                    {{ transaction.transaction_id }}
+                </td>
+
+                <td>
+                    {{ transaction.transaction_type }}
+                </td>
+
+                <td>
+                    ₹{{ "%.2f"|format(transaction.amount) }}
+                </td>
+
+                <td>
+                    ₹{{ "%.2f"|format(transaction.balance_after_transaction) }}
+                </td>
+
+                <td>
+                    {{ transaction.transaction_date }}
+                </td>
+
+                <td>
+                    {{ transaction.status }}
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+    {% else %}
+
+    <p>No transactions found.</p>
+
+    {% endif %}
+
+    <br>
+
+    <a href="{{ url_for('user_dashboard') }}">
+        Back to Dashboard
+    </a>
+
+</div>
+
+{% endblock %}

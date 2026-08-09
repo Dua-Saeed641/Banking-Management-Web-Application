@@ -216,3 +216,110 @@ def deposit():
     db.session.commit()
 
     return redirect(url_for("user_dashboard"))
+
+@app.route("/user/withdraw", methods=["GET", "POST"])
+@login_required
+def withdraw():
+    if not isinstance(current_user, User):
+        return "Unauthorized", 403
+    account = current_user.bank_account
+    if account is None:
+        return "Bank account not found.", 404
+
+    if request.method == "GET":
+        return render_template(
+            "user/withdraw.html",
+            account=account
+        )
+
+    amount = request.form.get("amount")
+    try:
+        amount = float(amount)
+    except (TypeError, ValueError):
+        return render_template(
+            "user/withdraw.html",
+            account=account,
+            withdraw_error="Please enter a valid amount."
+        )
+
+    if amount <= 0:
+        return render_template(
+            "user/withdraw.html",
+            account=account,
+            withdraw_error="Withdrawal amount must be greater than zero."
+        )
+
+    if account.status != "Active":
+        return render_template(
+            "user/withdraw.html",
+            account=account,
+            withdraw_error="Withdrawals are allowed only on active accounts."
+        )
+
+    if amount > account.balance:
+        return render_template(
+            "user/withdraw.html",
+            account=account,
+            withdraw_error="Insufficient balance."
+        )
+
+    new_balance = account.balance - amount
+    if new_balance < account.minimum_balance:
+        return render_template(
+            "user/withdraw.html",
+            account=account,
+            withdraw_error=(
+                f"Withdrawal would reduce your balance below "
+                f"the minimum required balance of "
+                f"₹{account.minimum_balance:.2f}."
+            )
+        )
+
+    account.balance = new_balance
+    transaction = Transaction(
+        account_id=account.account_id,
+        transaction_type="Withdraw",
+        amount=amount,
+        balance_after_transaction=account.balance,
+        status="Successful"
+    )
+
+    account.last_transaction_date = datetime.now(timezone.utc)
+    db.session.add(transaction)
+    db.session.commit()
+    return redirect(url_for("user_dashboard"))
+
+'''
+to confirm minium balance
+@app.route("/user/set-minimum-balance")
+@login_required
+def set_minimum_balance():
+    account = current_user.bank_account
+    if account is None:
+        return "Bank account not found.", 404
+    account.minimum_balance = 1000.0
+    db.session.commit()
+    return redirect(url_for("user_dashboard"))
+'''
+@app.route("/user/transactions")
+@login_required
+def transaction_history():
+
+    if not isinstance(current_user, User):
+        return "Unauthorized", 403
+
+    account = current_user.bank_account
+    if account is None:
+        return "Bank account not found.", 404
+
+    transactions = Transaction.query.filter_by(
+        account_id=account.account_id
+    ).order_by(
+        Transaction.transaction_date.desc()
+    ).all()
+    
+    return render_template(
+        "user/transactions.html",
+        account=account,
+        transactions=transactions
+    )
