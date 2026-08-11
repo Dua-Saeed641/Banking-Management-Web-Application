@@ -18,6 +18,7 @@
                 <th>Account Type</th>
                 <th>Balance</th>
                 <th>Status</th>
+                <th>Actions</th>
             </tr>
         </thead>
 
@@ -32,10 +33,33 @@
                     <td>{{ user.bank_account.account_number }}</td>
                     <td>{{ user.bank_account.account_type }}</td>
                     <td>₹{{ "%.2f"|format(user.bank_account.balance) }}</td>
-                    <td>{{ user.bank_account.status }}</td>
                 {% else %}
-                    <td colspan="4">No bank account</td>
+                    <td colspan="3">No bank account</td>
                 {% endif %}
+
+                <td>
+                    {% if user.is_active %}
+                        Active
+                    {% else %}
+                        Inactive
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if user.is_active %}
+                        <form method="POST" action="{{ url_for('blacklist_user', user_id=user.user_id) }}">
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                Blacklist
+                            </button>
+                        </form>
+                    {% else %}
+                        <form method="POST" action="{{ url_for('activate_user', user_id=user.user_id) }}">
+                            <button type="submit" class="btn btn-success btn-sm">
+                                Activate
+                            </button>
+                        </form>
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>

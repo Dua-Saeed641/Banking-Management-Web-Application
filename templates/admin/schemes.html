@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+    <div class="d-flex justify-content-between align-items-center">
+        <h2>Banking Schemes</h2>
+
+        <a href="{{ url_for('add_scheme') }}" class="btn btn-primary">
+            Add Scheme
+        </a>
+    </div>
+
+    {% if schemes %}
+
+    <table class="table table-bordered table-striped mt-4">
+
+        <thead>
+            <tr>
+                <th>Scheme ID</th>
+                <th>Scheme Name</th>
+                <th>Description</th>
+                <th>Minimum Balance</th>
+                <th>Interest Rate</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for scheme in schemes %}
+
+            <tr>
+                <td>{{ scheme.scheme_id }}</td>
+                <td>{{ scheme.scheme_name }}</td>
+                <td>{{ scheme.description }}</td>
+                <td>₹{{ "%.2f"|format(scheme.minimum_balance_required) }}</td>
+                <td>{{ scheme.interest_rate }}%</td>
+                <td>{{ scheme.status }}</td>
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+    {% else %}
+
+    <div class="alert alert-info mt-4">
+        No banking schemes found.
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

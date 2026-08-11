@@ -3,7 +3,7 @@ from flask_login import login_user,logout_user,login_required,current_user
 from app import app
 from functools import wraps
 from application.database import db
-from application.models import User, BankAccount, PRO, Admin,Transaction
+from application.models import User, BankAccount, PRO, Admin,Transaction, BankingScheme
 
 from werkzeug.security import generate_password_hash,check_password_hash
 from datetime import datetime, timezone
@@ -245,6 +245,63 @@ def admin_dashboard():
 def admin_users():
     users = User.query.all()
     return render_template("admin/users.html", users=users)
+
+@app.route("/admin/schemes")
+@admin_required
+def admin_schemes():
+    schemes = BankingScheme.query.all()
+    return render_template("admin/schemes.html", schemes=schemes)
+
+@app.route("/admin/schemes/add", methods=["GET", "POST"])
+@admin_required
+def add_scheme():
+    if request.method == "GET":
+        return render_template("admin/add_scheme.html")
+
+    scheme_name = request.form["scheme_name"].strip()
+    description = request.form["description"].strip()
+    minimum_balance = request.form["minimum_balance"]
+    interest_rate = request.form["interest_rate"]
+
+    if not scheme_name or not description:
+        flash("Please fill in all required fields.", "danger")
+        return redirect(url_for("add_scheme"))
+
+    scheme = BankingScheme(
+        scheme_name=scheme_name,
+        description=description,
+        minimum_balance_required=float(minimum_balance),
+        interest_rate=float(interest_rate),
+        status="Active"
+    )
+
+    db.session.add(scheme)
+    db.session.commit()
+
+    flash("Banking scheme added successfully.", "success")
+    return redirect(url_for("admin_schemes"))
+
+@app.route("/admin/users/<int:user_id>/blacklist", methods=["POST"])
+@admin_required
+def blacklist_user(user_id):
+    user = User.query.get_or_404(user_id)
+
+    user.is_active = False
+    db.session.commit()
+
+    flash("User has been blacklisted.", "success")
+    return redirect(url_for("admin_users"))
+
+@app.route("/admin/users/<int:user_id>/activate", methods=["POST"])
+@admin_required
+def activate_user(user_id):
+    user = User.query.get_or_404(user_id)
+
+    user.is_active = True
+    db.session.commit()
+
+    flash("User has been activated.", "success")
+    return redirect(url_for("admin_users"))
 
 @app.route("/user/dashboard")
 @login_required
