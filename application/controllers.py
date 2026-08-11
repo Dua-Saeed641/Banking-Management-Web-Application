@@ -109,6 +109,63 @@ def register_user():
     flash("Registration successful. You can now login.","success")
     return redirect(url_for("login", role="User"))
 
+@app.route("/register/pro", methods=["GET", "POST"])
+def register_pro():
+    if request.method == "GET":
+        return render_template("auth/register_pro.html")
+
+    name = request.form.get("name")
+    email = request.form.get("email")
+    password = request.form.get("password")
+    contact_number = request.form.get("contact_number")
+    experience = request.form.get("experience")
+
+    if len(password) < 8:
+        flash("Password must contain at least 8 characters.","danger")
+        return render_template("auth/register_pro.html",name=name,email=email,contact_number=contact_number,experience=experience)
+    
+    if not any(char.isupper() for char in password):
+        flash("Password must contain at least one uppercase letter.","danger")
+        return render_template("auth/register_pro.html",name=name,email=email,contact_number=contact_number,experience=experience)
+
+    if not any(char.islower() for char in password):
+        flash("Password must contain at least one lowercase letter.","danger")
+        return render_template("auth/register_pro.html",name=name,email=email,contact_number=contact_number,experience=experience)
+
+    if not any(char.isdigit() for char in password):
+        flash("Password must contain at least one digit.","danger")
+        return render_template("auth/register_pro.html",name=name,email=email,contact_number=contact_number,experience=experience)
+
+    if not any(not char.isalnum() and char != " " for char in password):
+        flash("Password must contain at least one special character.","danger")
+        return render_template("auth/register_pro.html",name=name,email=email,contact_number=contact_number,experience=experience)
+
+    if not contact_number.isdigit() or len(contact_number) != 10:
+        flash("Contact number must contain exactly 10 digits.","danger")
+        return render_template("auth/register_pro.html",name=name,email=email,contact_number=contact_number,experience=experience)
+
+    existing_email = PRO.query.filter_by(email=email).first()
+    if existing_email:
+        flash("An account with this email already exists.","danger")
+        return render_template("auth/register_pro.html",name=name,email=email,contact_number=contact_number,experience=experience)
+    
+    new_pro = PRO(
+        name=name,
+        email=email,
+        password=generate_password_hash(password),
+        contact_number=contact_number,
+        experience=int(experience or 0),
+        is_approved=False,
+        is_blacklisted=False,
+        is_active=True
+    )
+
+    db.session.add(new_pro)
+    db.session.commit()
+
+    flash("Registration successful. Your account is awaiting admin approval.","success")
+    return redirect(url_for("login", role="pro"))
+
 @app.route("/login/<role>", methods=["GET", "POST"])
 def login(role):
     role=role.lower()
@@ -183,6 +240,12 @@ def login(role):
 def admin_dashboard():
     return render_template("admin/dashboard.html")
 
+@app.route("/admin/users")
+@admin_required
+def admin_users():
+    users = User.query.all()
+    return render_template("admin/users.html", users=users)
+
 @app.route("/user/dashboard")
 @login_required
 def user_dashboard():
@@ -191,6 +254,17 @@ def user_dashboard():
         "user/dashboard.html",
         user=current_user,
         account=current_user.bank_account
+    )
+
+@app.route("/pro/dashboard")
+@login_required
+def pro_dashboard():
+    if not isinstance(current_user, PRO):
+        return "Unauthorized", 403
+
+    return render_template(
+        "pro/dashboard.html",
+        pro=current_user
     )
 
 @app.route("/admin/pro-request")
@@ -236,17 +310,6 @@ def blacklist_pro(pro_id):
 
     flash("PRO has been blacklisted.", "success")
     return redirect(url_for("pro_requests"))
-
-@app.route("/pro/dashboard")
-@login_required
-def pro_dashboard():
-    if not isinstance(current_user, PRO):
-        return "Unauthorized", 403
-
-    return render_template(
-        "pro/dashboard.html",
-        pro=current_user
-    )
 
 @app.route("/logout")
 @login_required
@@ -407,59 +470,3 @@ def transaction_history():
         transactions=transactions
     )
 
-@app.route("/register/pro", methods=["GET", "POST"])
-def register_pro():
-    if request.method == "GET":
-        return render_template("auth/register_pro.html")
-
-    name = request.form.get("name")
-    email = request.form.get("email")
-    password = request.form.get("password")
-    contact_number = request.form.get("contact_number")
-    experience = request.form.get("experience")
-
-    if len(password) < 8:
-        flash("Password must contain at least 8 characters.","danger")
-        return render_template("auth/register_pro.html",name=name,email=email,contact_number=contact_number,experience=experience)
-    
-    if not any(char.isupper() for char in password):
-        flash("Password must contain at least one uppercase letter.","danger")
-        return render_template("auth/register_pro.html",name=name,email=email,contact_number=contact_number,experience=experience)
-
-    if not any(char.islower() for char in password):
-        flash("Password must contain at least one lowercase letter.","danger")
-        return render_template("auth/register_pro.html",name=name,email=email,contact_number=contact_number,experience=experience)
-
-    if not any(char.isdigit() for char in password):
-        flash("Password must contain at least one digit.","danger")
-        return render_template("auth/register_pro.html",name=name,email=email,contact_number=contact_number,experience=experience)
-
-    if not any(not char.isalnum() and char != " " for char in password):
-        flash("Password must contain at least one special character.","danger")
-        return render_template("auth/register_pro.html",name=name,email=email,contact_number=contact_number,experience=experience)
-
-    if not contact_number.isdigit() or len(contact_number) != 10:
-        flash("Contact number must contain exactly 10 digits.","danger")
-        return render_template("auth/register_pro.html",name=name,email=email,contact_number=contact_number,experience=experience)
-
-    existing_email = PRO.query.filter_by(email=email).first()
-    if existing_email:
-        flash("An account with this email already exists.","danger")
-        return render_template("auth/register_pro.html",name=name,email=email,contact_number=contact_number,experience=experience)
-    
-    new_pro = PRO(
-        name=name,
-        email=email,
-        password=generate_password_hash(password),
-        contact_number=contact_number,
-        experience=int(experience or 0),
-        is_approved=False,
-        is_blacklisted=False,
-        is_active=True
-    )
-
-    db.session.add(new_pro)
-    db.session.commit()
-
-    flash("Registration successful. Your account is awaiting admin approval.","success")
-    return redirect(url_for("login", role="pro"))
