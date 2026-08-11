@@ -1,7 +1,7 @@
 from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_user,logout_user,login_required,current_user
 from app import app
-
+from functools import wraps
 from application.database import db
 from application.models import User, BankAccount, PRO, Admin,Transaction
 
@@ -45,6 +45,15 @@ def validate_password(password):
         return False, "Password must contain at least one special character."
 
     return True, "Password is valid."
+
+def admin_required(f):
+    @wraps(f)
+    @login_required
+    def decorated_function(*args, **kwargs):
+        if not isinstance(current_user, Admin):
+            return "Unauthorized", 403
+        return f(*args, **kwargs)
+    return decorated_function
 
 @app.route("/")
 def home():
@@ -102,15 +111,47 @@ def register_user():
 
 @app.route("/login/<role>", methods=["GET", "POST"])
 def login(role):
+    role=role.lower()
     if request.method == "GET":
-        return render_template(
-            "auth/login.html",
-            role=role
-        )
+        return render_template("auth/login.html",role=role)
 
     email = request.form["email"].strip().lower()
     password = request.form["password"]
+#Admin login
+    if role.lower() == "admin":
+        admin = Admin.query.filter_by(admin_email=email).first()
 
+        if admin and check_password_hash(admin.admin_password,password):
+            if not admin.is_active:
+                flash("Admin account is inactive.", "danger")
+                return redirect(url_for("login", role="Admin"))
+
+            login_user(admin)
+            return redirect(url_for("admin_dashboard"))
+
+        flash("Invalid admin email or password.", "danger")
+        return redirect(url_for("login", role="admin"))
+
+#PRO login
+    if role == "pro":
+        pro = PRO.query.filter_by(email=email).first()
+
+        if pro is None:
+            return render_template("auth/login.html",role=role,login_error="Invalid email or password.")
+
+        if not pro.is_active or pro.is_blacklisted:
+            return render_template("auth/login.html",role=role,login_error="Your PRO account has been blacklisted.")
+
+        if not pro.is_approved:
+            return render_template("auth/login.html",role=role,login_error="Your PRO account is awaiting admin approval.")
+
+        if not check_password_hash(pro.password, password):
+            return render_template("auth/login.html",role=role,login_error="Invalid email or password.")
+
+        login_user(pro)
+
+        return redirect(url_for("pro_dashboard"))
+#user login
     if role.lower() == "user":
         user = User.query.filter_by(email=email).first()
         if user is None:
@@ -137,6 +178,11 @@ def login(role):
         return redirect(url_for("user_dashboard"))
     return "Login for this role is not implemented yet."
 
+@app.route("/admin/dashboard")
+@admin_required
+def admin_dashboard():
+    return render_template("admin/dashboard.html")
+
 @app.route("/user/dashboard")
 @login_required
 def user_dashboard():
@@ -145,6 +191,61 @@ def user_dashboard():
         "user/dashboard.html",
         user=current_user,
         account=current_user.bank_account
+    )
+
+@app.route("/admin/pro-request")
+@admin_required
+def pro_requests():
+    pros = PRO.query.filter_by(is_approved=False, is_blacklisted=False).all()
+    return render_template("admin/pro_request.html", pros=pros)
+
+@app.route("/admin/pro-request/<int:pro_id>/approve", methods=["POST"])
+@admin_required
+def approve_pro(pro_id):
+    pro = PRO.query.get_or_404(pro_id)
+
+    if pro.is_approved:
+        flash("PRO is already approved.", "danger")
+        return redirect(url_for("pro_request"))
+
+    last_pro = PRO.query.filter(PRO.employee_code.isnot(None)).order_by(PRO.pro_id.desc()).first()
+
+    if last_pro and last_pro.employee_code:
+        number = int(last_pro.employee_code.replace("EMP", "")) + 1
+    else:
+        number = 1
+
+    pro.employee_code = f"EMP{number:03d}"
+    pro.is_approved = True
+    pro.is_blacklisted = False
+
+    db.session.commit()
+
+    flash(f"PRO approved successfully. Employee Code: {pro.employee_code}", "success")
+    return redirect(url_for("pro_requests"))
+
+@app.route("/admin/pro-requests/<int:pro_id>/blacklist", methods=["POST"])
+@admin_required
+def blacklist_pro(pro_id):
+    pro = PRO.query.get_or_404(pro_id)
+
+    pro.is_blacklisted = True
+    pro.is_approved = False
+
+    db.session.commit()
+
+    flash("PRO has been blacklisted.", "success")
+    return redirect(url_for("pro_requests"))
+
+@app.route("/pro/dashboard")
+@login_required
+def pro_dashboard():
+    if not isinstance(current_user, PRO):
+        return "Unauthorized", 403
+
+    return render_template(
+        "pro/dashboard.html",
+        pro=current_user
     )
 
 @app.route("/logout")
@@ -283,18 +384,6 @@ def withdraw():
     db.session.commit()
     return redirect(url_for("user_dashboard"))
 
-'''
-to confirm minium balance
-@app.route("/user/set-minimum-balance")
-@login_required
-def set_minimum_balance():
-    account = current_user.bank_account
-    if account is None:
-        return "Bank account not found.", 404
-    account.minimum_balance = 1000.0
-    db.session.commit()
-    return redirect(url_for("user_dashboard"))
-'''
 @app.route("/user/transactions")
 @login_required
 def transaction_history():

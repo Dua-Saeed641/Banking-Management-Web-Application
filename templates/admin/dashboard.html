@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+    <h2>Welcome, {{ current_user.admin_name }}</h2>
+
+    <hr>
+
+    <h3>Admin Dashboard</h3>
+
+    <br>
+
+    <br><br>
+
+    <br>
+    <br>
+
+    
+    <br>
+    <a href="{{ url_for('pro_requests') }}">PRO Registration Requests</a>
+    <br>
+    <a href="{{ url_for('logout') }}">Logout</a>
+
+</div>
+
+{% endblock %}

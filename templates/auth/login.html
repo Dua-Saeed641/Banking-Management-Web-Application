@@ -24,21 +24,14 @@
         <div class="col-md-5">
             <div class="card shadow">
                 <div class="card-body">
-                    <h2 class="text-center mb-4">
-                        {{ role }} Login
-                    </h2>
+                    <h2 class="text-center mb-4">{{ role|capitalize }} Login</h2>
                     {% if login_error %}
-                        <div class="alert alert-danger">
-                            {{ login_error }}
-                        </div>
+                        <div class="alert alert-danger"> {{ login_error }} </div>
                     {% endif %}
 
                     <form method="POST">
                         <div class="mb-3">
-                            <label class="form-label">
-                                Email
-                            </label>
-
+                            <label class="form-label">Email</label>
                             <input
                                 type="email"
                                 name="email"
@@ -50,18 +43,13 @@
 
 
                         <div class="mb-3">
-
-                            <label class="form-label">
-                                Password
-                            </label>
-
+                            <label class="form-label">Password</label>
                             <input
                                 type="password"
                                 name="password"
                                 class="form-control"
                                 required
                             >
-
                         </div>
 
 
@@ -70,50 +58,28 @@
                             class="btn btn-primary w-100">
                             Login
                         </button>
-
                     </form>
 
 
-                    {% if role == "PRO" %}
-
+                    {% if role == "pro" %}
                     <div class="text-center mt-3">
-
-                        <a href="{{ url_for('register_pro') }}">
-                            Register as PRO
-                        </a>
-
+                        <a href="{{ url_for('register_pro') }}">Register as PRO</a>
                     </div>
 
-                    {% elif role == "User" %}
-
+                    {% elif role == "user" %}
                     <div class="text-center mt-3">
-
-                        <a href="{{ url_for('register_user') }}">
-                            Register as User
-                        </a>
-
+                        <a href="{{ url_for('register_user') }}">Register as User</a>
                     </div>
 
                     {% endif %}
-
                     <div class="text-center mt-3">
-
-                        <a href="{{ url_for('home') }}">
-                            ← Back to Home
-                        </a>
+                        <a href="{{ url_for('home') }}">Back to Home</a>
 
                     </div>
-
                 </div>
-
             </div>
-
         </div>
-
     </div>
-
 </div>
-
 </body>
-
 </html>

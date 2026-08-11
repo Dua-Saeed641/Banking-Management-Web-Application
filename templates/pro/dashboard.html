@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+    <h2>Welcome, {{ pro.name }}</h2>
+
+    <hr>
+
+    <p><strong>Employee Code:</strong> {{ pro.employee_code }}</p>
+    <p><strong>Email:</strong> {{ pro.email }}</p>
+    <p><strong>Contact Number:</strong> {{ pro.contact_number }}</p>
+    <p><strong>Experience:</strong> {{ pro.experience }} years</p>
+    <p><strong>Status:</strong> Approved</p>
+
+    <a href="{{ url_for('logout') }}" class="btn btn-danger">
+        Logout
+    </a>
+
+</div>
+
+{% endblock %}

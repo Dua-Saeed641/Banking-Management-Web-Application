@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+    <h2>PRO Registration Requests</h2>
+
+    {% if pros %}
+
+    <table class="table table-bordered table-striped mt-4">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Contact Number</th>
+                <th>Experience</th>
+                <th>Joining Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for pro in pros %}
+            <tr>
+                <td>{{ pro.name }}</td>
+                <td>{{ pro.email }}</td>
+                <td>{{ pro.contact_number }}</td>
+                <td>{{ pro.experience }}</td>
+                <td>{{ pro.joining_date }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('approve_pro', pro_id=pro.pro_id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-success btn-sm">
+                            Approve
+                        </button>
+                    </form>
+
+                    <form method="POST" action="{{ url_for('blacklist_pro', pro_id=pro.pro_id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            Blacklist
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% else %}
+
+    <div class="alert alert-info mt-4">
+        No pending PRO registration requests.
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}
