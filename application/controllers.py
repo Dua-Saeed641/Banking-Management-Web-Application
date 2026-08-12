@@ -3,7 +3,7 @@ from flask_login import login_user,logout_user,login_required,current_user
 from app import app
 from functools import wraps
 from application.database import db
-from application.models import User, BankAccount, PRO, Admin,Transaction, BankingScheme
+from application.models import User, BankAccount, PRO, Admin,Transaction, BankingScheme, UserScheme
 
 from werkzeug.security import generate_password_hash,check_password_hash
 from datetime import datetime, timezone
@@ -241,10 +241,15 @@ def admin_dashboard():
     return render_template("admin/dashboard.html")
 
 @app.route("/admin/users")
-@admin_required
+@login_required
 def admin_users():
+    if not isinstance(current_user, Admin):
+        return "Unauthorized", 403
+
     users = User.query.all()
-    return render_template("admin/users.html", users=users)
+    pros = PRO.query.all()
+
+    return render_template("admin/users.html",users=users,pros=pros)
 
 @app.route("/admin/schemes")
 @admin_required
@@ -314,6 +319,36 @@ def toggle_scheme(scheme_id):
     db.session.commit()
     return redirect(url_for("admin_schemes"))
 
+@app.route("/admin/users/<int:user_id>/assign-pro", methods=["POST"])
+@login_required
+def assign_pro(user_id):
+    if not isinstance(current_user, Admin):
+        return "Unauthorized", 403
+
+    user = User.query.get_or_404(user_id)
+
+    pro_id = request.form.get("pro_id")
+
+    if not pro_id:
+        flash("Please select a PRO.", "danger")
+        return redirect(url_for("admin_users"))
+
+    pro = PRO.query.get_or_404(pro_id)
+
+    if not pro.is_approved:
+        flash("This PRO is not approved.", "danger")
+        return redirect(url_for("admin_users"))
+
+    if pro.is_blacklisted or not pro.is_active:
+        flash("This PRO is inactive or blacklisted.", "danger")
+        return redirect(url_for("admin_users"))
+
+    user.assigned_pro_id = pro.pro_id
+    db.session.commit()
+
+    flash("PRO assigned successfully.", "success")
+    return redirect(url_for("admin_users"))
+
 @app.route("/admin/users/<int:user_id>/blacklist", methods=["POST"])
 @admin_required
 def blacklist_user(user_id):
@@ -356,6 +391,102 @@ def pro_dashboard():
         "pro/dashboard.html",
         pro=current_user
     )
+
+@app.route("/pro/customers")
+@login_required
+def pro_customers():
+    if not isinstance(current_user, PRO):
+        return "Unauthorized", 403
+
+    customers = User.query.filter_by(
+        assigned_pro_id=current_user.pro_id,
+        is_active=True
+    ).all()
+
+    return render_template("pro/customers.html", customers=customers)
+
+
+@app.route("/pro/customers/<int:user_id>")
+@login_required
+def pro_customer_details(user_id):
+    if not isinstance(current_user, PRO):
+        return "Unauthorized", 403
+
+    user = User.query.filter_by(
+        user_id=user_id,
+        assigned_pro_id=current_user.pro_id,
+        is_active=True
+    ).first_or_404()
+
+    schemes = BankingScheme.query.filter_by(status="Active").all()
+
+    return render_template("pro/customer_details.html", user=user, schemes=schemes)
+
+
+@app.route("/pro/customers/<int:user_id>/recommend-scheme", methods=["POST"])
+@login_required
+def recommend_scheme(user_id):
+    if not isinstance(current_user, PRO):
+        return "Unauthorized", 403
+
+    user = User.query.filter_by(
+        user_id=user_id,
+        assigned_pro_id=current_user.pro_id,
+        is_active=True
+    ).first_or_404()
+
+    if not user.bank_account:
+        flash("Customer does not have a bank account.", "danger")
+        return redirect(url_for("pro_customer_details", user_id=user.user_id))
+
+    scheme_id = request.form.get("scheme_id")
+
+    if not scheme_id:
+        flash("Please select a scheme.", "danger")
+        return redirect(url_for("pro_customer_details", user_id=user.user_id))
+
+    scheme = BankingScheme.query.filter_by(
+        scheme_id=scheme_id,
+        status="Active"
+    ).first()
+
+    if not scheme:
+        flash("Invalid or inactive scheme.", "danger")
+        return redirect(url_for("pro_customer_details", user_id=user.user_id))
+
+    if user.bank_account.balance < scheme.minimum_balance_required:
+        flash(
+            f"Customer is not eligible for {scheme.scheme_name}. "
+            f"Minimum balance required is ₹{scheme.minimum_balance_required:.2f}.",
+            "danger"
+        )
+        return redirect(url_for("pro_customer_details", user_id=user.user_id))
+
+    recommendation = UserScheme(
+        user_id=user.user_id,
+        scheme_id=scheme.scheme_id,
+        assigned_by_pro=current_user.pro_id,
+        status="Pending"
+    )
+
+    db.session.add(recommendation)
+    db.session.commit()
+
+    flash(f"{scheme.scheme_name} recommended successfully.", "success")
+
+    return redirect(url_for("pro_customer_details", user_id=user.user_id))
+
+@app.route("/pro/recommendations")
+@login_required
+def pro_recommendations():
+    if not isinstance(current_user, PRO):
+        return "Unauthorized", 403
+
+    recommendations = UserScheme.query.filter_by(
+        assigned_by_pro=current_user.pro_id
+    ).all()
+
+    return render_template("pro/recommendations.html",recommendations=recommendations)
 
 @app.route("/admin/pro-request")
 @admin_required
@@ -560,3 +691,52 @@ def transaction_history():
         transactions=transactions
     )
 
+@app.route("/user/schemes")
+@login_required
+def user_schemes():
+    if not isinstance(current_user, User):
+        return "Unauthorized", 403
+
+    recommendations = UserScheme.query.filter_by(
+        user_id=current_user.user_id
+    ).order_by(UserScheme.assigned_date.desc()).all()
+
+    return render_template("user/schemes.html", recommendations=recommendations)
+
+
+@app.route("/user/schemes/<int:user_scheme_id>/accept", methods=["POST"])
+@login_required
+def accept_scheme(user_scheme_id):
+    if not isinstance(current_user, User):
+        return "Unauthorized", 403
+
+    recommendation = UserScheme.query.filter_by(
+        user_scheme_id=user_scheme_id,
+        user_id=current_user.user_id,
+        status="Pending"
+    ).first_or_404()
+
+    recommendation.status = "Accepted"
+    db.session.commit()
+
+    flash("Banking scheme accepted successfully.", "success")
+    return redirect(url_for("user_schemes"))
+
+
+@app.route("/user/schemes/<int:user_scheme_id>/reject", methods=["POST"])
+@login_required
+def reject_scheme(user_scheme_id):
+    if not isinstance(current_user, User):
+        return "Unauthorized", 403
+
+    recommendation = UserScheme.query.filter_by(
+        user_scheme_id=user_scheme_id,
+        user_id=current_user.user_id,
+        status="Pending"
+    ).first_or_404()
+
+    recommendation.status = "Rejected"
+    db.session.commit()
+
+    flash("Banking scheme rejected.", "info")
+    return redirect(url_for("user_schemes"))

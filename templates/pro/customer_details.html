@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Customer Details</h2>
+    <div class="card mt-4">
+        <div class="card-body">
+            <h4>{{ user.name }}</h4>
+            <p>
+                <strong>User ID:</strong>
+                {{ user.user_id }}
+            </p>
+
+            <p>
+                <strong>Email:</strong>
+                {{ user.email }}
+            </p>
+            {% if user.bank_account %}
+                <hr>
+                <h5>Bank Account</h5>
+                <p>
+                    <strong>Account Number:</strong>
+                    {{ user.bank_account.account_number }}
+                </p>
+
+                <p>
+                    <strong>Account Type:</strong>
+                    {{ user.bank_account.account_type }}
+                </p>
+
+                <p>
+                    <strong>Balance:</strong>
+                    ₹{{ "%.2f"|format(user.bank_account.balance) }}
+                </p>
+
+                <p>
+                    <strong>Minimum Balance:</strong>
+                    ₹{{ "%.2f"|format(user.bank_account.minimum_balance) }}
+                </p>
+
+                <p>
+                    <strong>IFSC Code:</strong>
+                    {{ user.bank_account.ifsc_code }}
+                </p>
+
+                <p>
+                    <strong>Account Status:</strong>
+                    {{ user.bank_account.status }}
+                </p>
+                <hr>
+
+                <h5>Recommend Banking Scheme</h5>
+
+                <form
+                    method="POST"
+                    action="{{ url_for('recommend_scheme', user_id=user.user_id) }}">
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Select Scheme
+                        </label>
+                        <select
+                            name="scheme_id"
+                            class="form-select"
+                            required>
+                            <option value=""> Select a scheme</option>
+
+                            {% for scheme in schemes %}
+                                {% if scheme.status == "Active" %}
+                                    <option value="{{ scheme.scheme_id }}">
+                                        {{ scheme.scheme_name }}
+                                        - Minimum Balance:
+                                        ₹{{ "%.2f"|format(scheme.minimum_balance_required) }}
+                                    </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="btn btn-success">
+                        Recommend Scheme
+                    </button>
+                </form>
+            {% else %}
+                <div class="alert alert-warning mt-3">
+                    This customer does not have a bank account.
+                </div>
+            {% endif %}
+
+            <div class="mt-4">
+                <a href="{{ url_for('pro_customers') }}" class="btn btn-secondary">Back to Customers </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

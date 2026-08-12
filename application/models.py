@@ -27,6 +27,8 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(255),nullable=False)
     is_active = db.Column(db.Boolean,default=True)
     created_at = db.Column(db.DateTime,default=datetime.now(timezone.utc))
+    assigned_pro_id = db.Column(db.Integer,db.ForeignKey("pros.pro_id"),nullable=True)
+    assigned_pro = db.relationship("PRO",backref="customers",foreign_keys=[assigned_pro_id])
     def get_id(self):
         return f"user-{self.user_id}"
 
@@ -105,3 +107,4 @@ class UserScheme(db.Model):
     assigned_by_pro = db.Column(db.Integer,db.ForeignKey("pros.pro_id"),nullable=False)
     assigned_date = db.Column(db.DateTime,default=datetime.now(timezone.utc))
     status = db.Column(db.String(20),nullable=False,default="Pending")
+

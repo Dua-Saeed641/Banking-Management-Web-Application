@@ -19,6 +19,9 @@
                 <th>Balance</th>
                 <th>Status</th>
                 <th>Actions</th>
+                <th>Assigned PRO</th>
+                <th>Action</th>
+
             </tr>
         </thead>
 
@@ -48,17 +51,39 @@
                 <td>
                     {% if user.is_active %}
                         <form method="POST" action="{{ url_for('blacklist_user', user_id=user.user_id) }}">
-                            <button type="submit" class="btn btn-danger btn-sm">
-                                Blacklist
-                            </button>
+                            <button type="submit" class="btn btn-danger btn-sm"> Blacklist </button>
                         </form>
                     {% else %}
                         <form method="POST" action="{{ url_for('activate_user', user_id=user.user_id) }}">
-                            <button type="submit" class="btn btn-success btn-sm">
-                                Activate
-                            </button>
+                            <button type="submit" class="btn btn-success btn-sm"> Activate</button>
                         </form>
                     {% endif %}
+                </td>
+                <td>
+                    {% if user.assigned_pro %}
+                        {{ user.assigned_pro.employee_code }} - {{ user.assigned_pro.name }}
+                    {% else %}
+                        Unassigned
+                    {% endif %}
+                </td>
+
+                <td>
+                    <form method="POST"
+                        action="{{ url_for('assign_pro', user_id=user.user_id) }}">
+
+                        <select name="pro_id" class="form-select form-select-sm mb-2" required>
+                            <option value="">Select PRO</option>
+                            {% for pro in pros %}
+                                {% if pro.is_approved and not pro.is_blacklisted and pro.is_active %}
+                                    <option value="{{ pro.pro_id }}"
+                                        {% if user.assigned_pro_id == pro.pro_id %}selected{% endif %}>
+                                        {{ pro.employee_code }} - {{ pro.name }}
+                                    </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm"> Assign </button>
+                    </form>
                 </td>
             </tr>
             {% endfor %}

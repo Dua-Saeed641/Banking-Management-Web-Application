@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+    <h2>My Recommendations</h2>
+
+    {% if recommendations %}
+
+    <table class="table table-bordered table-striped mt-4">
+
+        <thead>
+            <tr>
+                <th>Customer</th>
+                <th>Email</th>
+                <th>Scheme</th>
+                <th>Interest Rate</th>
+                <th>Minimum Balance</th>
+                <th>Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for recommendation in recommendations %}
+
+            <tr>
+                <td>{{ recommendation.user.name }}</td>
+                <td>{{ recommendation.user.email }}</td>
+                <td>{{ recommendation.scheme.scheme_name }}</td>
+                <td>{{ recommendation.scheme.interest_rate }}%</td>
+                <td>₹{{ "%.2f"|format(recommendation.scheme.minimum_balance_required) }}</td>
+                <td>{{ recommendation.assigned_date.strftime("%d-%m-%Y") }}</td>
+                <td>{{ recommendation.status }}</td>
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+    {% else %}
+
+    <div class="alert alert-info mt-4">
+        You have not recommended any schemes yet.
+    </div>
+
+    {% endif %}
+
+    <a href="{{ url_for('pro_dashboard') }}" class="btn btn-secondary mt-3">← Back to Dashboard</a>
+
+</div>
+
+{% endblock %}

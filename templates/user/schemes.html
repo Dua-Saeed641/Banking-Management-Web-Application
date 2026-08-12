@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+    <h2>My Banking Schemes</h2>
+
+    {% if recommendations %}
+
+        {% for recommendation in recommendations %}
+
+        <div class="card mt-4">
+
+            <div class="card-body">
+
+                <h5>{{ recommendation.scheme.scheme_name }}</h5>
+
+                <p><strong>Description:</strong> {{ recommendation.scheme.description }}</p>
+                <p><strong>Interest Rate:</strong> {{ recommendation.scheme.interest_rate }}%</p>
+                <p><strong>Minimum Balance:</strong> ₹{{ "%.2f"|format(recommendation.scheme.minimum_balance_required) }}</p>
+                <p><strong>Recommended By:</strong> {{ recommendation.pro.name }}</p>
+                <p><strong>Date:</strong> {{ recommendation.assigned_date.strftime("%d-%m-%Y") }}</p>
+                <p><strong>Status:</strong> {{ recommendation.status }}</p>
+
+                {% if recommendation.status == "Pending" %}
+
+                    <form method="POST" action="{{ url_for('accept_scheme', user_scheme_id=recommendation.user_scheme_id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-success">Accept</button>
+                    </form>
+
+                    <form method="POST" action="{{ url_for('reject_scheme', user_scheme_id=recommendation.user_scheme_id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-danger">Reject</button>
+                    </form>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    {% else %}
+
+        <div class="alert alert-info mt-4">
+            No banking schemes have been recommended to you.
+        </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}
