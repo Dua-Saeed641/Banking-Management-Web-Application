@@ -488,6 +488,32 @@ def pro_recommendations():
 
     return render_template("pro/recommendations.html",recommendations=recommendations)
 
+@app.route("/pro/customers/<int:user_id>/transactions")
+@login_required
+def pro_customer_transactions(user_id):
+    if not isinstance(current_user, PRO):
+        return "Unauthorized", 403
+
+    user = User.query.filter_by(
+        user_id=user_id,
+        assigned_pro_id=current_user.pro_id,
+        is_active=True
+    ).first_or_404()
+
+    if not user.bank_account:
+        flash("Customer does not have a bank account.", "danger")
+        return redirect(url_for("pro_customer_details", user_id=user.user_id))
+
+    transactions = Transaction.query.filter_by(
+        account_id=user.bank_account.account_id
+    ).order_by(Transaction.transaction_date.desc()).all()
+
+    return render_template(
+        "pro/customer_transactions.html",
+        user=user,
+        transactions=transactions
+    )
+
 @app.route("/admin/pro-request")
 @admin_required
 def pro_requests():

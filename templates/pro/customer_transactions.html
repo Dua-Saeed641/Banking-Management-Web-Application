@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+    <h2>{{ user.name }} - Transactions</h2>
+
+    <p><strong>Account Number:</strong> {{ user.bank_account.account_number }}</p>
+    <p><strong>Current Balance:</strong> ₹{{ "%.2f"|format(user.bank_account.balance) }}</p>
+
+    {% if transactions %}
+
+    <table class="table table-bordered table-striped mt-4">
+
+        <thead>
+            <tr>
+                <th>Transaction ID</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Balance After</th>
+                <th>Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for transaction in transactions %}
+
+            <tr>
+                <td>{{ transaction.transaction_id }}</td>
+                <td>{{ transaction.transaction_type }}</td>
+                <td>₹{{ "%.2f"|format(transaction.amount) }}</td>
+                <td>₹{{ "%.2f"|format(transaction.balance_after_transaction) }}</td>
+                <td>{{ transaction.transaction_date.strftime("%d-%m-%Y %H:%M") }}</td>
+                <td>{{ transaction.status }}</td>
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+    {% else %}
+
+    <div class="alert alert-info mt-4">
+        No transactions found for this customer.
+    </div>
+
+    {% endif %}
+
+    <a href="{{ url_for('pro_customer_details', user_id=user.user_id) }}" class="btn btn-secondary mt-3">← Back to Customer</a>
+
+</div>
+
+{% endblock %}

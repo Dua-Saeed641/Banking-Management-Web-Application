@@ -47,7 +47,7 @@
                     {{ user.bank_account.status }}
                 </p>
                 <hr>
-
+                <a href="{{ url_for('pro_customer_transactions', user_id=user.user_id) }}" class="btn btn-primary mt-2">View Transactions</a>
                 <h5>Recommend Banking Scheme</h5>
 
                 <form
