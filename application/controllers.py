@@ -281,6 +281,39 @@ def add_scheme():
     flash("Banking scheme added successfully.", "success")
     return redirect(url_for("admin_schemes"))
 
+@app.route("/admin/schemes/<int:scheme_id>/edit", methods=["GET", "POST"])
+@admin_required
+def edit_scheme(scheme_id):
+    scheme = BankingScheme.query.get_or_404(scheme_id)
+
+    if request.method == "GET":
+        return render_template("admin/edit_scheme.html", scheme=scheme)
+
+    scheme.scheme_name = request.form["scheme_name"].strip()
+    scheme.description = request.form["description"].strip()
+    scheme.minimum_balance_required = float(request.form["minimum_balance"])
+    scheme.interest_rate = float(request.form["interest_rate"])
+
+    db.session.commit()
+
+    flash("Banking scheme updated successfully.", "success")
+    return redirect(url_for("admin_schemes"))
+
+@app.route("/admin/schemes/<int:scheme_id>/toggle", methods=["POST"])
+@admin_required
+def toggle_scheme(scheme_id):
+    scheme = BankingScheme.query.get_or_404(scheme_id)
+
+    if scheme.status == "Active":
+        scheme.status = "Inactive"
+        flash("Banking scheme deactivated.", "success")
+    else:
+        scheme.status = "Active"
+        flash("Banking scheme activated.", "success")
+
+    db.session.commit()
+    return redirect(url_for("admin_schemes"))
+
 @app.route("/admin/users/<int:user_id>/blacklist", methods=["POST"])
 @admin_required
 def blacklist_user(user_id):

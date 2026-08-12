@@ -24,13 +24,12 @@
                 <th>Minimum Balance</th>
                 <th>Interest Rate</th>
                 <th>Status</th>
+                <th>Actions</th>
             </tr>
         </thead>
 
         <tbody>
-
             {% for scheme in schemes %}
-
             <tr>
                 <td>{{ scheme.scheme_id }}</td>
                 <td>{{ scheme.scheme_name }}</td>
@@ -38,12 +37,23 @@
                 <td>₹{{ "%.2f"|format(scheme.minimum_balance_required) }}</td>
                 <td>{{ scheme.interest_rate }}%</td>
                 <td>{{ scheme.status }}</td>
+                <td>
+                    <a href="{{ url_for('edit_scheme', scheme_id=scheme.scheme_id) }}" class="btn btn-primary btn-sm"> Edit </a>
+                    <form
+                        method="POST"
+                        action="{{ url_for('toggle_scheme', scheme_id=scheme.scheme_id) }}"
+                        style="display: inline;">
+                        {% if scheme.status == "Active" %}
+                            <button type="submit" class="btn btn-danger btn-sm"> Deactivate </button>
+                        {% else %}
+                            <button type="submit" class="btn btn-success btn-sm"> Activate </button>
+                        {% endif %}
+                    </form>
+                </td>
             </tr>
 
             {% endfor %}
-
         </tbody>
-
     </table>
 
     {% else %}
