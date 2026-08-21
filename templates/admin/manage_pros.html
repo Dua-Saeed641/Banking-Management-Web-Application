@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+    <h2>Manage PROs</h2>
+
+    {% if pros %}
+
+    <table class="table table-bordered table-striped mt-4">
+
+        <thead>
+            <tr>
+                <th>PRO ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Employee Code</th>
+                <th>Experience</th>
+                <th>Approval</th>
+                <th>Status</th>
+                <th>Customers</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for pro in pros %}
+
+            <tr>
+
+                <td>{{ pro.pro_id }}</td>
+                <td>{{ pro.name }}</td>
+                <td>{{ pro.email }}</td>
+                <td>{{ pro.employee_code or "Not Assigned" }}</td>
+                <td>{{ pro.experience }} years</td>
+
+                <td>
+                    {% if pro.is_approved %}
+                        Approved
+                    {% else %}
+                        Pending
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if pro.is_blacklisted %}
+                        Blacklisted
+                    {% elif pro.is_active %}
+                        Active
+                    {% else %}
+                        Inactive
+                    {% endif %}
+                </td>
+
+                <td>{{ pro.customers|length }}</td>
+
+                <td>
+                    <a href="{{ url_for('admin_pro_customers', pro_id=pro.pro_id) }}" class="btn btn-primary btn-sm">Customers</a>
+
+                    <form method="POST" action="{{ url_for('toggle_pro_blacklist', pro_id=pro.pro_id) }}" class="d-inline">
+
+                        {% if pro.is_blacklisted %}
+                            <button type="submit" class="btn btn-success btn-sm">Unblacklist</button>
+                        {% else %}
+                            <button type="submit" class="btn btn-danger btn-sm">Blacklist</button>
+                        {% endif %}
+
+                    </form>
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+    {% else %}
+
+    <div class="alert alert-info mt-4">
+        No PROs found.
+    </div>
+
+    {% endif %}
+
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+    <h2>{{ pro.name }}'s Customers</h2>
+
+    {% if customers %}
+
+    <table class="table table-bordered table-striped mt-4">
+
+        <thead>
+            <tr>
+                <th>User ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Account Number</th>
+                <th>Balance</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for user in customers %}
+
+            <tr>
+
+                <td>{{ user.user_id }}</td>
+                <td>{{ user.name }}</td>
+                <td>{{ user.email }}</td>
+
+                {% if user.bank_account %}
+
+                    <td>{{ user.bank_account.account_number }}</td>
+                    <td>{{ "%.2f"|format(user.bank_account.balance) }}</td>
+                    <td>{{ user.bank_account.status }}</td>
+
+                {% else %}
+
+                    <td colspan="3">No bank account</td>
+
+                {% endif %}
+
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+    {% else %}
+
+    <div class="alert alert-info mt-4">
+        No customers are currently assigned to this PRO.
+    </div>
+
+    {% endif %}
+
+    <a href="{{ url_for('manage_pros') }}" class="btn btn-secondary">Back to PROs</a>
+
+</div>
+
+{% endblock %}

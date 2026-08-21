@@ -7,32 +7,18 @@
             <h2>Welcome, {{ user.name }}</h2>
             <hr>
             <h4>Account Details</h4>
-            <p>
-                <strong>Account Number:</strong>
-                {{ account.account_number }}
-            </p>
-            <p>
-                <strong>Account Type:</strong>
-                {{ account.account_type }}
-            </p>
-            <p>
-                <strong>Balance:</strong>
-                ₹{{ "%.2f"|format(account.balance) }}
-            </p>
-            <p>
-                <strong>IFSC Code:</strong>
-                {{ account.ifsc_code }}
-            </p>
-            <p>
-                <strong>Status:</strong>
-                {{ account.status }}
-            </p>
-            
-            <a href="{{ url_for('deposit') }}" class="btn btn-success">Deposit Money</a>
-            <a href="{{ url_for('withdraw') }}" class="btn btn-danger">Withdraw Money</a>
+
+            <p><strong>Account Number:</strong> {{ account.account_number }}</p>
+            <p><strong>Account Type:</strong> {{ account.account_type }}</p>
+            <p><strong>Balance:</strong> ₹{{ "%.2f"|format(account.balance) }}</p>
+            <p><strong>IFSC Code:</strong> {{ account.ifsc_code }}</p>
+            <p><strong>Status:</strong> {{ account.status }}</p>
+
+           <a href="{{ url_for('deposit') }}" class="btn btn-success">Deposit Money</a>
+            <a href="{{ url_for('user_withdraw') }}" class="btn btn-danger">Withdraw Money</a>
             <a href="{{ url_for('transaction_history') }}" class="btn btn-primary">Transaction History</a>
             <a href="{{ url_for('user_schemes') }}" class="btn btn-primary">My Banking Schemes</a>
-            <a href="{{ url_for('logout') }}" class="btn btn-danger"> Logout </a>
+            <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
         </div>
     </div>
 </div>

@@ -98,7 +98,6 @@ def register_user():
         account_number=account_number,
         account_type="Savings",
         balance=0.0,
-        minimum_balance=0.0,
         ifsc_code="ATM001",
         status="Active"
     )
@@ -120,25 +119,9 @@ def register_pro():
     contact_number = request.form.get("contact_number")
     experience = request.form.get("experience")
 
-    if len(password) < 8:
-        flash("Password must contain at least 8 characters.","danger")
-        return render_template("auth/register_pro.html",name=name,email=email,contact_number=contact_number,experience=experience)
-    
-    if not any(char.isupper() for char in password):
-        flash("Password must contain at least one uppercase letter.","danger")
-        return render_template("auth/register_pro.html",name=name,email=email,contact_number=contact_number,experience=experience)
-
-    if not any(char.islower() for char in password):
-        flash("Password must contain at least one lowercase letter.","danger")
-        return render_template("auth/register_pro.html",name=name,email=email,contact_number=contact_number,experience=experience)
-
-    if not any(char.isdigit() for char in password):
-        flash("Password must contain at least one digit.","danger")
-        return render_template("auth/register_pro.html",name=name,email=email,contact_number=contact_number,experience=experience)
-
-    if not any(not char.isalnum() and char != " " for char in password):
-        flash("Password must contain at least one special character.","danger")
-        return render_template("auth/register_pro.html",name=name,email=email,contact_number=contact_number,experience=experience)
+    password_valid, password_message = validate_password(password)
+    if not password_valid:
+        return render_template("auth/register_pro.html",name=name,email=email,contact_number=contact_number,experience=experience,password_error=password_message)
 
     if not contact_number.isdigit() or len(contact_number) != 10:
         flash("Contact number must contain exactly 10 digits.","danger")
@@ -193,17 +176,17 @@ def login(role):
     if role == "pro":
         pro = PRO.query.filter_by(email=email).first()
 
-        if pro is None:
+        if pro is None or not check_password_hash(pro.password, password):
             return render_template("auth/login.html",role=role,login_error="Invalid email or password.")
-
-        if not pro.is_active or pro.is_blacklisted:
-            return render_template("auth/login.html",role=role,login_error="Your PRO account has been blacklisted.")
 
         if not pro.is_approved:
             return render_template("auth/login.html",role=role,login_error="Your PRO account is awaiting admin approval.")
 
-        if not check_password_hash(pro.password, password):
-            return render_template("auth/login.html",role=role,login_error="Invalid email or password.")
+        if pro.is_blacklisted:
+            return render_template("auth/login.html",role=role,login_error="Your PRO account has been blacklisted.")
+
+        if not pro.is_active:
+            return render_template("auth/login.html",role=role,login_error="Your PRO account is inactive.")
 
         login_user(pro)
 
@@ -374,11 +357,18 @@ def activate_user(user_id):
 @app.route("/user/dashboard")
 @login_required
 def user_dashboard():
+    if not isinstance(current_user, User):
+        return "Unauthorized", 403
+
+    account = current_user.bank_account
+
+    if account is None:
+        return "Bank account not found.", 404
 
     return render_template(
         "user/dashboard.html",
         user=current_user,
-        account=current_user.bank_account
+        account=account
     )
 
 @app.route("/pro/dashboard")
@@ -386,6 +376,18 @@ def user_dashboard():
 def pro_dashboard():
     if not isinstance(current_user, PRO):
         return "Unauthorized", 403
+
+    if current_user.is_blacklisted:
+        logout_user()
+        return "Your PRO account has been blacklisted.", 403
+
+    if not current_user.is_active:
+        logout_user()
+        return "Your PRO account is inactive.", 403
+
+    if not current_user.is_approved:
+        logout_user()
+        return "Your PRO account is not approved.", 403
 
     return render_template(
         "pro/dashboard.html",
@@ -508,11 +510,35 @@ def pro_customer_transactions(user_id):
         account_id=user.bank_account.account_id
     ).order_by(Transaction.transaction_date.desc()).all()
 
-    return render_template(
-        "pro/customer_transactions.html",
-        user=user,
-        transactions=transactions
-    )
+    return render_template("pro/customer_transactions.html",user=user, transactions=transactions)
+
+@app.route("/pro/customers/<int:user_id>/account-status", methods=["POST"])
+@login_required
+def pro_update_account_status(user_id):
+    if not isinstance(current_user, PRO):
+        return "Unauthorized", 403
+
+    user = User.query.filter_by(
+        user_id=user_id,
+        assigned_pro_id=current_user.pro_id,
+        is_active=True
+    ).first_or_404()
+
+    if not user.bank_account:
+        flash("Customer does not have a bank account.", "danger")
+        return redirect(url_for("pro_customer_details", user_id=user.user_id))
+
+    status = request.form.get("status")
+
+    if status not in ["Active", "Blocked", "Closed"]:
+        flash("Invalid account status.", "danger")
+        return redirect(url_for("pro_customer_details", user_id=user.user_id))
+
+    user.bank_account.status = status
+    db.session.commit()
+
+    flash(f"Account status changed to {status}.", "success")
+    return redirect(url_for("pro_customer_details", user_id=user.user_id))
 
 @app.route("/admin/pro-request")
 @admin_required
@@ -520,14 +546,14 @@ def pro_requests():
     pros = PRO.query.filter_by(is_approved=False, is_blacklisted=False).all()
     return render_template("admin/pro_request.html", pros=pros)
 
-@app.route("/admin/pro-request/<int:pro_id>/approve", methods=["POST"])
+@app.route("/admin/pro-requests/<int:pro_id>/approve", methods=["POST"])
 @admin_required
 def approve_pro(pro_id):
     pro = PRO.query.get_or_404(pro_id)
 
     if pro.is_approved:
         flash("PRO is already approved.", "danger")
-        return redirect(url_for("pro_request"))
+        return redirect(url_for("pro_requests"))
 
     last_pro = PRO.query.filter(PRO.employee_code.isnot(None)).order_by(PRO.pro_id.desc()).first()
 
@@ -557,6 +583,48 @@ def blacklist_pro(pro_id):
 
     flash("PRO has been blacklisted.", "success")
     return redirect(url_for("pro_requests"))
+
+@app.route("/admin/pros")
+@login_required
+def manage_pros():
+    if not isinstance(current_user, Admin):
+        return "Unauthorized", 403
+
+    pros = PRO.query.order_by(PRO.pro_id.desc()).all()
+
+    return render_template("admin/manage_pros.html", pros=pros)
+
+@app.route("/admin/pros/<int:pro_id>/customers")
+@login_required
+def admin_pro_customers(pro_id):
+    if not isinstance(current_user, Admin):
+        return "Unauthorized", 403
+
+    pro = PRO.query.get_or_404(pro_id)
+
+    customers = User.query.filter_by(
+        assigned_pro_id=pro.pro_id
+    ).all()
+
+    return render_template(
+        "admin/pro_customers.html",
+        pro=pro,
+        customers=customers
+    )
+
+@app.route("/admin/pros/<int:pro_id>/toggle-blacklist", methods=["POST"])
+@login_required
+def toggle_pro_blacklist(pro_id):
+    if not isinstance(current_user, Admin):
+        return "Unauthorized", 403
+
+    pro = PRO.query.get_or_404(pro_id)
+
+    pro.is_blacklisted = not pro.is_blacklisted
+
+    db.session.commit()
+
+    return redirect(url_for("manage_pros"))
 
 @app.route("/logout")
 @login_required
@@ -624,75 +692,56 @@ def deposit():
 
 @app.route("/user/withdraw", methods=["GET", "POST"])
 @login_required
-def withdraw():
+def user_withdraw():
     if not isinstance(current_user, User):
         return "Unauthorized", 403
-    account = current_user.bank_account
-    if account is None:
-        return "Bank account not found.", 404
 
-    if request.method == "GET":
-        return render_template(
-            "user/withdraw.html",
-            account=account
-        )
+    if not current_user.bank_account:
+        flash("No bank account found.", "danger")
+        return redirect(url_for("user_dashboard"))
 
-    amount = request.form.get("amount")
-    try:
-        amount = float(amount)
-    except (TypeError, ValueError):
-        return render_template(
-            "user/withdraw.html",
-            account=account,
-            withdraw_error="Please enter a valid amount."
-        )
+    if current_user.bank_account.status != "Active":
+        flash("Withdrawals are not allowed on an inactive account.", "danger")
+        return redirect(url_for("user_dashboard"))
 
-    if amount <= 0:
-        return render_template(
-            "user/withdraw.html",
-            account=account,
-            withdraw_error="Withdrawal amount must be greater than zero."
-        )
+    if request.method == "POST":
+        try:
+            amount = float(request.form.get("amount", 0))
+        except ValueError:
+            amount = 0
 
-    if account.status != "Active":
-        return render_template(
-            "user/withdraw.html",
-            account=account,
-            withdraw_error="Withdrawals are allowed only on active accounts."
-        )
+        if amount <= 0:
+            flash("Enter a valid withdrawal amount.", "danger")
+            return redirect(url_for("user_withdraw"))
 
-    if amount > account.balance:
-        return render_template(
-            "user/withdraw.html",
-            account=account,
-            withdraw_error="Insufficient balance."
-        )
+        account = current_user.bank_account
 
-    new_balance = account.balance - amount
-    if new_balance < account.minimum_balance:
-        return render_template(
-            "user/withdraw.html",
-            account=account,
-            withdraw_error=(
-                f"Withdrawal would reduce your balance below "
-                f"the minimum required balance of "
-                f"₹{account.minimum_balance:.2f}."
+        if account.balance - amount < account.minimum_balance:
+            flash(
+                f"Withdrawal denied. Minimum balance of ₹{account.minimum_balance:.2f} must be maintained.",
+                "danger"
             )
+            return redirect(url_for("user_withdraw"))
+
+        account.balance -= amount
+        account.last_transaction_date = datetime.now(timezone.utc)
+
+        transaction = Transaction(
+            account_id=account.account_id,
+            transaction_type="Withdrawal",
+            amount=amount,
+            balance_after_transaction=account.balance,
+            status="Successful"
         )
 
-    account.balance = new_balance
-    transaction = Transaction(
-        account_id=account.account_id,
-        transaction_type="Withdraw",
-        amount=amount,
-        balance_after_transaction=account.balance,
-        status="Successful"
-    )
+        db.session.add(transaction)
+        db.session.commit()
 
-    account.last_transaction_date = datetime.now(timezone.utc)
-    db.session.add(transaction)
-    db.session.commit()
-    return redirect(url_for("user_dashboard"))
+        flash("Amount withdrawn successfully.", "success")
+        return redirect(url_for("transaction_history"))
+
+    return render_template("user/withdraw.html", account=current_user.bank_account)
+
 
 @app.route("/user/transactions")
 @login_required
@@ -728,7 +777,6 @@ def user_schemes():
     ).order_by(UserScheme.assigned_date.desc()).all()
 
     return render_template("user/schemes.html", recommendations=recommendations)
-
 
 @app.route("/user/schemes/<int:user_scheme_id>/accept", methods=["POST"])
 @login_required
@@ -766,3 +814,4 @@ def reject_scheme(user_scheme_id):
 
     flash("Banking scheme rejected.", "info")
     return redirect(url_for("user_schemes"))
+

@@ -52,7 +52,6 @@ class PRO(UserMixin, db.Model):
     def get_id(self):
         return f"pro-{self.pro_id}"
 
-    assigned_accounts = db.relationship("BankAccount",backref="assigned_pro",foreign_keys="BankAccount.assigned_pro_id")
     recommended_schemes = db.relationship("UserScheme",backref="pro",foreign_keys="UserScheme.assigned_by_pro")
 
 class BankAccount(db.Model):
@@ -67,7 +66,6 @@ class BankAccount(db.Model):
     ifsc_code = db.Column(db.String(20),nullable=False)
     opening_date = db.Column(db.Date,default=datetime.now(timezone.utc))
     status = db.Column(db.String(20),nullable=False,default="Active")
-    assigned_pro_id = db.Column(db.Integer,db.ForeignKey("pros.pro_id"),nullable=True)
     last_transaction_date = db.Column(db.DateTime,nullable=True)
 
     transactions = db.relationship("Transaction",backref="account",lazy=True)
