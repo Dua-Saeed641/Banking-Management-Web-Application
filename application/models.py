@@ -67,8 +67,10 @@ class BankAccount(db.Model):
     opening_date = db.Column(db.Date,default=datetime.now(timezone.utc))
     status = db.Column(db.String(20),nullable=False,default="Active")
     last_transaction_date = db.Column(db.DateTime,nullable=True)
+    scheme_id = db.Column(db.Integer,db.ForeignKey("banking_schemes.scheme_id"),nullable=True)
 
     transactions = db.relationship("Transaction",backref="account",lazy=True)
+    scheme = db.relationship("BankingScheme",backref="accounts")
 
 class Transaction(db.Model):
 

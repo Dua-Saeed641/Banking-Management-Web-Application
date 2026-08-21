@@ -790,10 +790,27 @@ def accept_scheme(user_scheme_id):
         status="Pending"
     ).first_or_404()
 
+    account = current_user.bank_account
+
+    if account is None:
+        flash("Bank account not found.", "danger")
+        return redirect(url_for("user_schemes"))
+
+    scheme = recommendation.scheme
+
+    if account.balance < scheme.minimum_balance_required:
+        flash(
+            f"You cannot accept {scheme.scheme_name}. Your current balance does not meet the minimum balance requirement.",
+            "danger"
+        )
+        return redirect(url_for("user_schemes"))
+
+    account.scheme_id = scheme.scheme_id
     recommendation.status = "Accepted"
+
     db.session.commit()
 
-    flash("Banking scheme accepted successfully.", "success")
+    flash(f"{scheme.scheme_name} has been activated for your account.", "success")
     return redirect(url_for("user_schemes"))
 
 
@@ -812,6 +829,6 @@ def reject_scheme(user_scheme_id):
     recommendation.status = "Rejected"
     db.session.commit()
 
-    flash("Banking scheme rejected.", "info")
+    flash("Scheme recommendation rejected.", "info")
     return redirect(url_for("user_schemes"))
 

@@ -14,6 +14,18 @@
             <p><strong>IFSC Code:</strong> {{ account.ifsc_code }}</p>
             <p><strong>Status:</strong> {{ account.status }}</p>
 
+            <hr>
+
+            <h4>Active Banking Scheme</h4>
+
+            {% if account.scheme %}
+            <p><strong>Scheme:</strong> {{ account.scheme.scheme_name }}</p>
+            <p><strong>Interest Rate:</strong> {{ account.scheme.interest_rate }}%</p>
+            <p><strong>Minimum Balance Required:</strong> ₹{{ "%.2f"|format(account.scheme.minimum_balance_required) }}</p>
+            {% else %}
+            <p>No banking scheme is currently active on this account.</p>
+            {% endif %}
+
            <a href="{{ url_for('deposit') }}" class="btn btn-success">Deposit Money</a>
             <a href="{{ url_for('user_withdraw') }}" class="btn btn-danger">Withdraw Money</a>
             <a href="{{ url_for('transaction_history') }}" class="btn btn-primary">Transaction History</a>
