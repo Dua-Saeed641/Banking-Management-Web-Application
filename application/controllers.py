@@ -422,7 +422,24 @@ def pro_customer_details(user_id):
 
     schemes = BankingScheme.query.filter_by(status="Active").all()
 
-    return render_template("pro/customer_details.html", user=user, schemes=schemes)
+    pending_scheme_ids = {
+        r.scheme_id for r in UserScheme.query.filter_by(
+            user_id=user.user_id,
+            status="Pending"
+        ).all()
+    }
+
+    customer_recommendations = UserScheme.query.filter_by(
+        user_id=user.user_id
+    ).order_by(UserScheme.assigned_date.desc()).all()
+
+    return render_template(
+        "pro/customer_details.html",
+        user=user,
+        schemes=schemes,
+        pending_scheme_ids=pending_scheme_ids,
+        customer_recommendations=customer_recommendations
+    )
 
 
 @app.route("/pro/customers/<int:user_id>/recommend-scheme", methods=["POST"])
@@ -456,6 +473,16 @@ def recommend_scheme(user_id):
         flash("Invalid or inactive scheme.", "danger")
         return redirect(url_for("pro_customer_details", user_id=user.user_id))
 
+    duplicate = UserScheme.query.filter_by(
+        user_id=user.user_id,
+        scheme_id=scheme.scheme_id,
+        status="Pending"
+    ).first()
+
+    if duplicate:
+        flash(f"{scheme.scheme_name} is already pending for this customer.", "danger")
+        return redirect(url_for("pro_customer_details", user_id=user.user_id))
+
     if user.bank_account.balance < scheme.minimum_balance_required:
         flash(
             f"Customer is not eligible for {scheme.scheme_name}. "
@@ -486,9 +513,9 @@ def pro_recommendations():
 
     recommendations = UserScheme.query.filter_by(
         assigned_by_pro=current_user.pro_id
-    ).all()
+    ).order_by(UserScheme.assigned_date.desc()).all()
 
-    return render_template("pro/recommendations.html",recommendations=recommendations)
+    return render_template("pro/recommendations.html", recommendations=recommendations)
 
 @app.route("/pro/customers/<int:user_id>/transactions")
 @login_required

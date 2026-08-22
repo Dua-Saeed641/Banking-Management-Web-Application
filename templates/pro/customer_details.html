@@ -1,53 +1,61 @@
 {% extends "base.html" %}
+
 {% block content %}
+
 <div class="container mt-5">
+
     <h2>Customer Details</h2>
+
     <div class="card mt-4">
+
         <div class="card-body">
+
             <h4>{{ user.name }}</h4>
-            <p>
-                <strong>User ID:</strong>
-                {{ user.user_id }}
-            </p>
 
-            <p>
-                <strong>Email:</strong>
-                {{ user.email }}
-            </p>
+            <p><strong>User ID:</strong> {{ user.user_id }}</p>
+
+            <p><strong>Email:</strong> {{ user.email }}</p>
+
             {% if user.bank_account %}
+
                 <hr>
+
                 <h5>Bank Account</h5>
-                <p>
-                    <strong>Account Number:</strong>
-                    {{ user.bank_account.account_number }}
-                </p>
 
-                <p>
-                    <strong>Account Type:</strong>
-                    {{ user.bank_account.account_type }}
-                </p>
+                <p><strong>Account Number:</strong> {{ user.bank_account.account_number }}</p>
 
-                <p>
-                    <strong>Balance:</strong>
-                    ₹{{ "%.2f"|format(user.bank_account.balance) }}
-                </p>
+                <p><strong>Account Type:</strong> {{ user.bank_account.account_type }}</p>
 
-                <p>
-                    <strong>Minimum Balance:</strong>
-                    ₹{{ "%.2f"|format(user.bank_account.minimum_balance) }}
-                </p>
+                <p><strong>Balance:</strong> ₹{{ "%.2f"|format(user.bank_account.balance) }}</p>
 
-                <p>
-                    <strong>IFSC Code:</strong>
-                    {{ user.bank_account.ifsc_code }}
-                </p>
+                <p><strong>Minimum Balance:</strong> ₹{{ "%.2f"|format(user.bank_account.minimum_balance) }}</p>
 
-                <p>
-                    <strong>Account Status:</strong>
-                    {{ user.bank_account.status }}
-                </p>
+                <p><strong>IFSC Code:</strong> {{ user.bank_account.ifsc_code }}</p>
+
+                <p><strong>Account Status:</strong> {{ user.bank_account.status }}</p>
+
                 <hr>
+
+                <h5>Active Banking Scheme</h5>
+
+                {% if user.bank_account.scheme %}
+
+                <p><strong>Scheme:</strong> {{ user.bank_account.scheme.scheme_name }}</p>
+                <p><strong>Interest Rate:</strong> {{ user.bank_account.scheme.interest_rate }}%</p>
+                <p><strong>Minimum Balance Required:</strong> ₹{{ "%.2f"|format(user.bank_account.scheme.minimum_balance_required) }}</p>
+
+                {% else %}
+
+                <p class="text-muted">No active scheme on this account.</p>
+
+                {% endif %}
+
+                <hr>
+
                 <a href="{{ url_for('pro_customer_transactions', user_id=user.user_id) }}" class="btn btn-primary mt-2">View Transactions</a>
+
+                <hr>
+
                 <h5>Recommend Banking Scheme</h5>
 
                 <form
@@ -55,25 +63,34 @@
                     action="{{ url_for('recommend_scheme', user_id=user.user_id) }}">
 
                     <div class="mb-3">
-                        <label class="form-label">
-                            Select Scheme
-                        </label>
+
+                        <label class="form-label">Select Scheme</label>
+
                         <select
                             name="scheme_id"
                             class="form-select"
                             required>
-                            <option value=""> Select a scheme</option>
+
+                            <option value="">Select a scheme</option>
 
                             {% for scheme in schemes %}
                                 {% if scheme.status == "Active" %}
-                                    <option value="{{ scheme.scheme_id }}">
-                                        {{ scheme.scheme_name }}
-                                        - Minimum Balance:
-                                        ₹{{ "%.2f"|format(scheme.minimum_balance_required) }}
+
+                                    {% if scheme.scheme_id in pending_scheme_ids %}
+                                    <option value="{{ scheme.scheme_id }}" disabled>
+                                        {{ scheme.scheme_name }} - ₹{{ "%.2f"|format(scheme.minimum_balance_required) }} (Already Pending)
                                     </option>
+                                    {% else %}
+                                    <option value="{{ scheme.scheme_id }}">
+                                        {{ scheme.scheme_name }} - Minimum Balance: ₹{{ "%.2f"|format(scheme.minimum_balance_required) }}
+                                    </option>
+                                    {% endif %}
+
                                 {% endif %}
                             {% endfor %}
+
                         </select>
+
                     </div>
 
                     <button
@@ -81,26 +98,87 @@
                         class="btn btn-success">
                         Recommend Scheme
                     </button>
+
                 </form>
 
-                <form method="POST" action="{{ url_for('pro_update_account_status', user_id=user.user_id) }}" class="mt-3">
+                <hr>
+
+                <h5>Update Account Status</h5>
+
+                <form method="POST" action="{{ url_for('pro_update_account_status', user_id=user.user_id) }}" class="mt-2">
+
                     <select name="status" class="form-select d-inline w-auto" required>
                         <option value="Active" {% if user.bank_account.status == "Active" %}selected{% endif %}>Active</option>
                         <option value="Blocked" {% if user.bank_account.status == "Blocked" %}selected{% endif %}>Blocked</option>
                         <option value="Closed" {% if user.bank_account.status == "Closed" %}selected{% endif %}>Closed</option>
                     </select>
+
                     <button type="submit" class="btn btn-warning">Update Account Status</button>
+
                 </form>
+
+                <hr>
+
+                <h5>Recommendation History</h5>
+
+                {% if customer_recommendations %}
+
+                <table class="table table-bordered table-striped mt-3">
+
+                    <thead>
+                        <tr>
+                            <th>Scheme</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for rec in customer_recommendations %}
+                        <tr>
+                            <td>{{ rec.scheme.scheme_name }}</td>
+                            <td>{{ rec.assigned_date.strftime("%d-%m-%Y") }}</td>
+                            <td>
+                                {% if rec.status == "Accepted" %}
+                                <span class="badge bg-success">Accepted</span>
+                                {% elif rec.status == "Replaced" %}
+                                <span class="badge bg-warning text-dark">Replaced</span>
+                                {% elif rec.status == "Rejected" %}
+                                <span class="badge bg-danger">Rejected</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ rec.status }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+                {% else %}
+
+                <p class="text-muted">No recommendations made for this customer yet.</p>
+
+                {% endif %}
+
             {% else %}
+
                 <div class="alert alert-warning mt-3">
                     This customer does not have a bank account.
                 </div>
+
             {% endif %}
 
             <div class="mt-4">
-                <a href="{{ url_for('pro_customers') }}" class="btn btn-secondary">Back to Customers </a>
+                <a href="{{ url_for('pro_customers') }}" class="btn btn-secondary">Back to Customers</a>
             </div>
+
         </div>
+
     </div>
+
 </div>
+
 {% endblock %}

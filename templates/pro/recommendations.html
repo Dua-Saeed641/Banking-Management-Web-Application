@@ -33,7 +33,17 @@
                 <td>{{ recommendation.scheme.interest_rate }}%</td>
                 <td>₹{{ "%.2f"|format(recommendation.scheme.minimum_balance_required) }}</td>
                 <td>{{ recommendation.assigned_date.strftime("%d-%m-%Y") }}</td>
-                <td>{{ recommendation.status }}</td>
+                <td>
+                    {% if recommendation.status == "Accepted" %}
+                    <span class="badge bg-success">Accepted</span>
+                    {% elif recommendation.status == "Replaced" %}
+                    <span class="badge bg-warning text-dark">Replaced</span>
+                    {% elif recommendation.status == "Rejected" %}
+                    <span class="badge bg-danger">Rejected</span>
+                    {% else %}
+                    <span class="badge bg-secondary">{{ recommendation.status }}</span>
+                    {% endif %}
+                </td>
             </tr>
 
             {% endfor %}
