@@ -19,7 +19,12 @@
 
             <p>
                 <strong>Minimum Balance Required:</strong>
-                ₹{{ "%.2f"|format(account.minimum_balance) }}
+                ₹{{ "%.2f"|format(effective_minimum) }}
+                {% if account.scheme and account.scheme.status == "Active" %}
+                    <span class="badge bg-info text-dark ms-1">{{ account.scheme.scheme_name }}</span>
+                {% else %}
+                    <span class="badge bg-secondary ms-1">Account Default</span>
+                {% endif %}
             </p>
 
             {% if withdraw_error %}

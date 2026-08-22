@@ -6,11 +6,46 @@
 
     <h2>My Banking Schemes</h2>
 
-    {% if recommendations %}
+    <hr>
 
-        {% for recommendation in recommendations %}
+    <h4>Active Scheme</h4>
 
-        <div class="card mt-4">
+    {% if active %}
+
+    <div class="card mt-3 border-success">
+
+        <div class="card-body">
+
+            <h5>{{ active.scheme.scheme_name }}</h5>
+
+            <p><strong>Description:</strong> {{ active.scheme.description }}</p>
+            <p><strong>Interest Rate:</strong> {{ active.scheme.interest_rate }}%</p>
+            <p><strong>Minimum Balance:</strong> ₹{{ "%.2f"|format(active.scheme.minimum_balance_required) }}</p>
+            <p><strong>Recommended By:</strong> {{ active.pro.name }}</p>
+            <p><strong>Date:</strong> {{ active.assigned_date.strftime("%d-%m-%Y") }}</p>
+            <p><strong>Status:</strong> <span class="badge bg-success">Accepted</span></p>
+
+        </div>
+
+    </div>
+
+    {% else %}
+
+    <div class="alert alert-info mt-3">
+        No active banking scheme on your account.
+    </div>
+
+    {% endif %}
+
+    <hr class="mt-4">
+
+    <h4>Pending Recommendations</h4>
+
+    {% if pending %}
+
+        {% for recommendation in pending %}
+
+        <div class="card mt-3">
 
             <div class="card-body">
 
@@ -21,19 +56,15 @@
                 <p><strong>Minimum Balance:</strong> ₹{{ "%.2f"|format(recommendation.scheme.minimum_balance_required) }}</p>
                 <p><strong>Recommended By:</strong> {{ recommendation.pro.name }}</p>
                 <p><strong>Date:</strong> {{ recommendation.assigned_date.strftime("%d-%m-%Y") }}</p>
-                <p><strong>Status:</strong> {{ recommendation.status }}</p>
+                <p><strong>Status:</strong> <span class="badge bg-secondary">Pending</span></p>
 
-                {% if recommendation.status == "Pending" %}
+                <form method="POST" action="{{ url_for('accept_scheme', user_scheme_id=recommendation.user_scheme_id) }}" class="d-inline">
+                    <button type="submit" class="btn btn-success">Accept</button>
+                </form>
 
-                    <form method="POST" action="{{ url_for('accept_scheme', user_scheme_id=recommendation.user_scheme_id) }}" class="d-inline">
-                        <button type="submit" class="btn btn-success">Accept</button>
-                    </form>
-
-                    <form method="POST" action="{{ url_for('reject_scheme', user_scheme_id=recommendation.user_scheme_id) }}" class="d-inline">
-                        <button type="submit" class="btn btn-danger">Reject</button>
-                    </form>
-
-                {% endif %}
+                <form method="POST" action="{{ url_for('reject_scheme', user_scheme_id=recommendation.user_scheme_id) }}" class="d-inline">
+                    <button type="submit" class="btn btn-danger">Reject</button>
+                </form>
 
             </div>
 
@@ -43,9 +74,54 @@
 
     {% else %}
 
-        <div class="alert alert-info mt-4">
-            No banking schemes have been recommended to you.
+    <div class="alert alert-info mt-3">
+        No pending recommendations.
+    </div>
+
+    {% endif %}
+
+    <hr class="mt-4">
+
+    <h4>Scheme History</h4>
+
+    {% if history %}
+
+        {% for recommendation in history %}
+
+        <div class="card mt-3">
+
+            <div class="card-body">
+
+                <h5>{{ recommendation.scheme.scheme_name }}</h5>
+
+                <p><strong>Description:</strong> {{ recommendation.scheme.description }}</p>
+                <p><strong>Interest Rate:</strong> {{ recommendation.scheme.interest_rate }}%</p>
+                <p><strong>Minimum Balance:</strong> ₹{{ "%.2f"|format(recommendation.scheme.minimum_balance_required) }}</p>
+                <p><strong>Recommended By:</strong> {{ recommendation.pro.name }}</p>
+                <p><strong>Date:</strong> {{ recommendation.assigned_date.strftime("%d-%m-%Y") }}</p>
+
+                <p>
+                    <strong>Status:</strong>
+
+                    {% if recommendation.status == "Replaced" %}
+                    <span class="badge bg-warning text-dark">Replaced</span>
+                    {% elif recommendation.status == "Rejected" %}
+                    <span class="badge bg-danger">Rejected</span>
+                    {% endif %}
+
+                </p>
+
+            </div>
+
         </div>
+
+        {% endfor %}
+
+    {% else %}
+
+    <div class="alert alert-info mt-3">
+        No scheme history yet.
+    </div>
 
     {% endif %}
 

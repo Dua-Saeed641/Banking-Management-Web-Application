@@ -693,6 +693,7 @@ def deposit():
 @app.route("/user/withdraw", methods=["GET", "POST"])
 @login_required
 def user_withdraw():
+
     if not isinstance(current_user, User):
         return "Unauthorized", 403
 
@@ -700,9 +701,16 @@ def user_withdraw():
         flash("No bank account found.", "danger")
         return redirect(url_for("user_dashboard"))
 
-    if current_user.bank_account.status != "Active":
+    account = current_user.bank_account
+
+    if account.status != "Active":
         flash("Withdrawals are not allowed on an inactive account.", "danger")
         return redirect(url_for("user_dashboard"))
+
+    if account.scheme and account.scheme.status == "Active":
+        effective_minimum = account.scheme.minimum_balance_required
+    else:
+        effective_minimum = account.minimum_balance
 
     if request.method == "POST":
         try:
@@ -714,11 +722,9 @@ def user_withdraw():
             flash("Enter a valid withdrawal amount.", "danger")
             return redirect(url_for("user_withdraw"))
 
-        account = current_user.bank_account
-
-        if account.balance - amount < account.minimum_balance:
+        if account.balance - amount < effective_minimum:
             flash(
-                f"Withdrawal denied. Minimum balance of ₹{account.minimum_balance:.2f} must be maintained.",
+                f"Withdrawal denied. Minimum balance of ₹{effective_minimum:.2f} must be maintained.",
                 "danger"
             )
             return redirect(url_for("user_withdraw"))
@@ -740,7 +746,11 @@ def user_withdraw():
         flash("Amount withdrawn successfully.", "success")
         return redirect(url_for("transaction_history"))
 
-    return render_template("user/withdraw.html", account=current_user.bank_account)
+    return render_template(
+        "user/withdraw.html",
+        account=account,
+        effective_minimum=effective_minimum
+    )
 
 
 @app.route("/user/transactions")
@@ -772,11 +782,27 @@ def user_schemes():
     if not isinstance(current_user, User):
         return "Unauthorized", 403
 
-    recommendations = UserScheme.query.filter_by(
-        user_id=current_user.user_id
+    active = UserScheme.query.filter_by(
+        user_id=current_user.user_id,
+        status="Accepted"
+    ).first()
+
+    pending = UserScheme.query.filter_by(
+        user_id=current_user.user_id,
+        status="Pending"
     ).order_by(UserScheme.assigned_date.desc()).all()
 
-    return render_template("user/schemes.html", recommendations=recommendations)
+    history = UserScheme.query.filter(
+        UserScheme.user_id == current_user.user_id,
+        UserScheme.status.in_(["Replaced", "Rejected"])
+    ).order_by(UserScheme.assigned_date.desc()).all()
+
+    return render_template(
+        "user/schemes.html",
+        active=active,
+        pending=pending,
+        history=history
+    )
 
 @app.route("/user/schemes/<int:user_scheme_id>/accept", methods=["POST"])
 @login_required
@@ -805,12 +831,21 @@ def accept_scheme(user_scheme_id):
         )
         return redirect(url_for("user_schemes"))
 
-    account.scheme_id = scheme.scheme_id
+    previous = UserScheme.query.filter_by(
+        user_id=current_user.user_id,
+        status="Accepted"
+    ).first()
+
+    if previous:
+        previous.status = "Replaced"
+
     recommendation.status = "Accepted"
+
+    account.scheme_id = scheme.scheme_id
 
     db.session.commit()
 
-    flash(f"{scheme.scheme_name} has been activated for your account.", "success")
+    flash(f"{scheme.scheme_name} is now your active banking scheme.", "success")
     return redirect(url_for("user_schemes"))
 
 
