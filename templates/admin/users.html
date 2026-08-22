@@ -17,11 +17,11 @@
                 <th>Account Number</th>
                 <th>Account Type</th>
                 <th>Balance</th>
-                <th>Status</th>
+                <th>Account Status</th>
+                <th>User Status</th>
                 <th>Actions</th>
                 <th>Assigned PRO</th>
-                <th>Action</th>
-
+                <th>Assign PRO</th>
             </tr>
         </thead>
 
@@ -36,29 +36,50 @@
                     <td>{{ user.bank_account.account_number }}</td>
                     <td>{{ user.bank_account.account_type }}</td>
                     <td>₹{{ "%.2f"|format(user.bank_account.balance) }}</td>
+                    <td>
+                        {% if user.bank_account.status == "Active" %}
+                        <span class="badge bg-success">Active</span>
+                        {% elif user.bank_account.status == "Frozen" %}
+                        <span class="badge bg-warning text-dark">Frozen</span>
+                        {% else %}
+                        <span class="badge bg-danger">{{ user.bank_account.status }}</span>
+                        {% endif %}
+                    </td>
                 {% else %}
-                    <td colspan="3">No bank account</td>
+                    <td colspan="4">No bank account</td>
                 {% endif %}
 
                 <td>
                     {% if user.is_active %}
-                        Active
+                    <span class="badge bg-success">Active</span>
                     {% else %}
-                        Inactive
+                    <span class="badge bg-danger">Blacklisted</span>
                     {% endif %}
                 </td>
 
                 <td>
                     {% if user.is_active %}
-                        <form method="POST" action="{{ url_for('blacklist_user', user_id=user.user_id) }}">
-                            <button type="submit" class="btn btn-danger btn-sm"> Blacklist </button>
+                        <form method="POST" action="{{ url_for('blacklist_user', user_id=user.user_id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-danger btn-sm">Blacklist</button>
                         </form>
                     {% else %}
-                        <form method="POST" action="{{ url_for('activate_user', user_id=user.user_id) }}">
-                            <button type="submit" class="btn btn-success btn-sm"> Activate</button>
+                        <form method="POST" action="{{ url_for('activate_user', user_id=user.user_id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-success btn-sm">Activate</button>
                         </form>
                     {% endif %}
+
+                    {% if user.bank_account %}
+                    <form method="POST" action="{{ url_for('admin_update_account_status', user_id=user.user_id) }}" class="d-inline">
+                        <select name="status" class="form-select form-select-sm d-inline w-auto" required>
+                            <option value="Active" {% if user.bank_account.status == "Active" %}selected{% endif %}>Active</option>
+                            <option value="Frozen" {% if user.bank_account.status == "Frozen" %}selected{% endif %}>Frozen</option>
+                            <option value="Closed" {% if user.bank_account.status == "Closed" %}selected{% endif %}>Closed</option>
+                        </select>
+                        <button type="submit" class="btn btn-warning btn-sm">Set</button>
+                    </form>
+                    {% endif %}
                 </td>
+
                 <td>
                     {% if user.assigned_pro %}
                         {{ user.assigned_pro.employee_code }} - {{ user.assigned_pro.name }}
@@ -82,7 +103,7 @@
                                 {% endif %}
                             {% endfor %}
                         </select>
-                        <button type="submit" class="btn btn-primary btn-sm"> Assign </button>
+                        <button type="submit" class="btn btn-primary btn-sm">Assign</button>
                     </form>
                 </td>
             </tr>

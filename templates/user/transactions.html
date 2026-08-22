@@ -10,14 +10,14 @@
 
     {% if transactions %}
 
-    <table border="1" cellpadding="10" cellspacing="0" width="100%">
+    <table class="table table-bordered table-striped mt-3">
 
         <thead>
             <tr>
-                <th>Transaction ID</th>
-                <th>Transaction Type</th>
+                <th>Reference</th>
+                <th>Type</th>
                 <th>Amount</th>
-                <th>Balance After Transaction</th>
+                <th>Balance After</th>
                 <th>Date</th>
                 <th>Status</th>
             </tr>
@@ -29,29 +29,25 @@
 
             <tr>
 
-                <td>
-                    {{ transaction.transaction_id }}
-                </td>
+                <td>TXN-{{ "%05d"|format(transaction.transaction_id) }}</td>
 
                 <td>
-                    {{ transaction.transaction_type }}
+                    {% if transaction.transaction_type == "Deposit" %}
+                    <span class="badge bg-success">Deposit</span>
+                    {% elif transaction.transaction_type == "Withdrawal" %}
+                    <span class="badge bg-danger">Withdrawal</span>
+                    {% else %}
+                    <span class="badge bg-secondary">{{ transaction.transaction_type }}</span>
+                    {% endif %}
                 </td>
 
-                <td>
-                    ₹{{ "%.2f"|format(transaction.amount) }}
-                </td>
+                <td>₹{{ "%.2f"|format(transaction.amount) }}</td>
 
-                <td>
-                    ₹{{ "%.2f"|format(transaction.balance_after_transaction) }}
-                </td>
+                <td>₹{{ "%.2f"|format(transaction.balance_after_transaction) }}</td>
 
-                <td>
-                    {{ transaction.transaction_date }}
-                </td>
+                <td>{{ transaction.transaction_date.strftime("%d-%m-%Y %H:%M") }}</td>
 
-                <td>
-                    {{ transaction.status }}
-                </td>
+                <td>{{ transaction.status }}</td>
 
             </tr>
 
@@ -63,15 +59,13 @@
 
     {% else %}
 
-    <p>No transactions found.</p>
+    <div class="alert alert-info mt-3">
+        No transactions found.
+    </div>
 
     {% endif %}
 
-    <br>
-
-    <a href="{{ url_for('user_dashboard') }}">
-        Back to Dashboard
-    </a>
+    <a href="{{ url_for('user_dashboard') }}" class="btn btn-secondary mt-3">Back to Dashboard</a>
 
 </div>
 

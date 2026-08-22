@@ -354,6 +354,27 @@ def activate_user(user_id):
     flash("User has been activated.", "success")
     return redirect(url_for("admin_users"))
 
+@app.route("/admin/users/<int:user_id>/account-status", methods=["POST"])
+@admin_required
+def admin_update_account_status(user_id):
+    user = User.query.get_or_404(user_id)
+
+    if not user.bank_account:
+        flash("This user does not have a bank account.", "danger")
+        return redirect(url_for("admin_users"))
+
+    status = request.form.get("status")
+
+    if status not in ["Active", "Frozen", "Closed"]:
+        flash("Invalid account status.", "danger")
+        return redirect(url_for("admin_users"))
+
+    user.bank_account.status = status
+    db.session.commit()
+
+    flash(f"Account status updated to {status}.", "success")
+    return redirect(url_for("admin_users"))
+
 @app.route("/user/dashboard")
 @login_required
 def user_dashboard():
@@ -370,10 +391,15 @@ def user_dashboard():
     if account is None:
         return "Bank account not found.", 404
 
+    recent_transactions = Transaction.query.filter_by(
+        account_id=account.account_id
+    ).order_by(Transaction.transaction_date.desc()).limit(5).all()
+
     return render_template(
         "user/dashboard.html",
         user=current_user,
-        account=account
+        account=account,
+        recent_transactions=recent_transactions
     )
 
 @app.route("/pro/dashboard")
@@ -704,6 +730,10 @@ def deposit():
     if account is None:
         return "Bank account not found.", 404
 
+    if account.status != "Active":
+        flash("Deposits are not allowed on this account.", "danger")
+        return redirect(url_for("user_dashboard"))
+
     if request.method == "GET":
         return render_template(
             "user/deposit.html",
@@ -714,7 +744,6 @@ def deposit():
     try:
         amount = float(amount)
     except (TypeError, ValueError):
-
         return render_template(
             "user/deposit.html",
             account=account,
@@ -726,13 +755,6 @@ def deposit():
             "user/deposit.html",
             account=account,
             deposit_error="Deposit amount must be greater than zero."
-        )
-
-    if account.status != "Active":
-        return render_template(
-            "user/deposit.html",
-            account=account,
-            deposit_error="Deposits are allowed only on active accounts."
         )
 
     account.balance += amount
@@ -767,11 +789,11 @@ def user_withdraw():
         flash("No bank account found.", "danger")
         return redirect(url_for("user_dashboard"))
 
-    account = current_user.bank_account
-
-    if account.status != "Active":
-        flash("Withdrawals are not allowed on an inactive account.", "danger")
+    if current_user.bank_account.status != "Active":
+        flash("Withdrawals are not allowed on this account.", "danger")
         return redirect(url_for("user_dashboard"))
+
+    account = current_user.bank_account
 
     if account.scheme and account.scheme.status == "Active":
         effective_minimum = account.scheme.minimum_balance_required
@@ -899,6 +921,17 @@ def accept_scheme(user_scheme_id):
         return redirect(url_for("user_schemes"))
 
     scheme = recommendation.scheme
+
+    if scheme.status != "Active":
+        flash(
+            f"{scheme.scheme_name} is no longer active and cannot be accepted.",
+            "danger"
+        )
+        return redirect(url_for("user_schemes"))
+
+    if account.status != "Active":
+        flash("Scheme acceptance is not allowed on this account.", "danger")
+        return redirect(url_for("user_schemes"))
 
     if account.balance < scheme.minimum_balance_required:
         flash(

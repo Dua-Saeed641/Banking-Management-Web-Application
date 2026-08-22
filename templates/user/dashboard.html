@@ -12,7 +12,16 @@
             <p><strong>Account Type:</strong> {{ account.account_type }}</p>
             <p><strong>Balance:</strong> ₹{{ "%.2f"|format(account.balance) }}</p>
             <p><strong>IFSC Code:</strong> {{ account.ifsc_code }}</p>
-            <p><strong>Status:</strong> {{ account.status }}</p>
+            <p>
+                <strong>Status:</strong>
+                {% if account.status == "Active" %}
+                <span class="badge bg-success">Active</span>
+                {% elif account.status == "Frozen" %}
+                <span class="badge bg-warning text-dark">Frozen</span>
+                {% else %}
+                <span class="badge bg-danger">{{ account.status }}</span>
+                {% endif %}
+            </p>
 
             <hr>
 
@@ -26,6 +35,51 @@
             <p>No banking scheme is currently active on this account.</p>
             {% endif %}
 
+            <hr>
+
+            <h4>Recent Transactions</h4>
+
+            {% if recent_transactions %}
+
+            <table class="table table-bordered table-sm mt-3">
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Balance After</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transaction in recent_transactions %}
+                    <tr>
+                        <td>TXN-{{ "%05d"|format(transaction.transaction_id) }}</td>
+                        <td>
+                            {% if transaction.transaction_type == "Deposit" %}
+                            <span class="badge bg-success">Deposit</span>
+                            {% elif transaction.transaction_type == "Withdrawal" %}
+                            <span class="badge bg-danger">Withdrawal</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ transaction.transaction_type }}</span>
+                            {% endif %}
+                        </td>
+                        <td>₹{{ "%.2f"|format(transaction.amount) }}</td>
+                        <td>₹{{ "%.2f"|format(transaction.balance_after_transaction) }}</td>
+                        <td>{{ transaction.transaction_date.strftime("%d-%m-%Y %H:%M") }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% else %}
+
+            <p class="text-muted">No transactions yet.</p>
+
+            {% endif %}
+
+            <hr>
+
            <a href="{{ url_for('deposit') }}" class="btn btn-success">Deposit Money</a>
             <a href="{{ url_for('user_withdraw') }}" class="btn btn-danger">Withdraw Money</a>
             <a href="{{ url_for('transaction_history') }}" class="btn btn-primary">Transaction History</a>
@@ -35,4 +89,4 @@
     </div>
 </div>
 
-{% endblock %}
+{% endblock %}
