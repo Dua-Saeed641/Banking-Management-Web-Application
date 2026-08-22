@@ -360,6 +360,11 @@ def user_dashboard():
     if not isinstance(current_user, User):
         return "Unauthorized", 403
 
+    if not current_user.is_active:
+        logout_user()
+        flash("Your account has been deactivated.", "danger")
+        return redirect(url_for("login", role="user"))
+
     account = current_user.bank_account
 
     if account is None:
@@ -639,6 +644,30 @@ def admin_pro_customers(pro_id):
         customers=customers
     )
 
+@app.route("/admin/pros/<int:pro_id>/detail")
+@admin_required
+def admin_pro_detail(pro_id):
+    pro = PRO.query.get_or_404(pro_id)
+
+    recommendations = UserScheme.query.filter_by(
+        assigned_by_pro=pro.pro_id
+    ).order_by(UserScheme.assigned_date.desc()).all()
+
+    total = len(recommendations)
+    accepted = sum(1 for r in recommendations if r.status == "Accepted")
+    rejected = sum(1 for r in recommendations if r.status == "Rejected")
+    replaced = sum(1 for r in recommendations if r.status == "Replaced")
+
+    return render_template(
+        "admin/pro_detail.html",
+        pro=pro,
+        recommendations=recommendations,
+        total=total,
+        accepted=accepted,
+        rejected=rejected,
+        replaced=replaced
+    )
+
 @app.route("/admin/pros/<int:pro_id>/toggle-blacklist", methods=["POST"])
 @login_required
 def toggle_pro_blacklist(pro_id):
@@ -665,6 +694,11 @@ def deposit():
 
     if not isinstance(current_user, User):
         return "Unauthorized", 403
+
+    if not current_user.is_active:
+        logout_user()
+        flash("Your account has been deactivated.", "danger")
+        return redirect(url_for("login", role="user"))
 
     account = current_user.bank_account
     if account is None:
@@ -723,6 +757,11 @@ def user_withdraw():
 
     if not isinstance(current_user, User):
         return "Unauthorized", 403
+
+    if not current_user.is_active:
+        logout_user()
+        flash("Your account has been deactivated.", "danger")
+        return redirect(url_for("login", role="user"))
 
     if not current_user.bank_account:
         flash("No bank account found.", "danger")
@@ -809,6 +848,11 @@ def user_schemes():
     if not isinstance(current_user, User):
         return "Unauthorized", 403
 
+    if not current_user.is_active:
+        logout_user()
+        flash("Your account has been deactivated.", "danger")
+        return redirect(url_for("login", role="user"))
+
     active = UserScheme.query.filter_by(
         user_id=current_user.user_id,
         status="Accepted"
@@ -836,6 +880,11 @@ def user_schemes():
 def accept_scheme(user_scheme_id):
     if not isinstance(current_user, User):
         return "Unauthorized", 403
+
+    if not current_user.is_active:
+        logout_user()
+        flash("Your account has been deactivated.", "danger")
+        return redirect(url_for("login", role="user"))
 
     recommendation = UserScheme.query.filter_by(
         user_scheme_id=user_scheme_id,
