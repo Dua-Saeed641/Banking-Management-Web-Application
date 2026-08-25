@@ -2,41 +2,37 @@
 
 {% block content %}
 
-<div class="container mt-5">
+<h2 class="mb-4">Registered Users</h2>
 
-    <h2>Registered Users</h2>
+{% if users %}
 
-    {% if users %}
+<div class="table-responsive">
+<table class="table table-bordered table-hover" style="font-size:0.8rem; white-space:nowrap; min-width:900px;">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Account No.</th>
+            <th>Balance</th>
+            <th>Account Status</th>
+            <th>User Status</th>
+            <th>Assign PRO</th>
+        </tr>
+    </thead>
 
-    <table class="table table-bordered table-striped mt-4">
-        <thead>
-            <tr>
-                <th>User ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Account Number</th>
-                <th>Account Type</th>
-                <th>Balance</th>
-                <th>Account Status</th>
-                <th>User Status</th>
-                <th>Actions</th>
-                <th>Assigned PRO</th>
-                <th>Assign PRO</th>
-            </tr>
-        </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.user_id }}</td>
+            <td>{{ user.name }}</td>
+            <td>{{ user.email }}</td>
 
-        <tbody>
-            {% for user in users %}
-            <tr>
-                <td>{{ user.user_id }}</td>
-                <td>{{ user.name }}</td>
-                <td>{{ user.email }}</td>
-
-                {% if user.bank_account %}
-                    <td>{{ user.bank_account.account_number }}</td>
-                    <td>{{ user.bank_account.account_type }}</td>
-                    <td>₹{{ "%.2f"|format(user.bank_account.balance) }}</td>
-                    <td>
+            {% if user.bank_account %}
+                <td>{{ user.bank_account.account_number }}</td>
+                <td>₹{{ "%.2f"|format(user.bank_account.balance) }}</td>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
                         {% if user.bank_account.status == "Active" %}
                         <span class="badge bg-success">Active</span>
                         {% elif user.bank_account.status == "Frozen" %}
@@ -44,81 +40,61 @@
                         {% else %}
                         <span class="badge bg-danger">{{ user.bank_account.status }}</span>
                         {% endif %}
-                    </td>
-                {% else %}
-                    <td colspan="4">No bank account</td>
-                {% endif %}
+                        <form method="POST" action="{{ url_for('admin_update_account_status', user_id=user.user_id) }}" class="d-flex gap-1 align-items-center">
+                            <select name="status" class="form-select form-select-sm" style="width:80px;" required>
+                                <option value="Active" {% if user.bank_account.status == "Active" %}selected{% endif %}>Active</option>
+                                <option value="Frozen" {% if user.bank_account.status == "Frozen" %}selected{% endif %}>Frozen</option>
+                                <option value="Closed" {% if user.bank_account.status == "Closed" %}selected{% endif %}>Closed</option>
+                            </select>
+                            <button type="submit" class="btn btn-primary btn-sm">Set</button>
+                        </form>
+                    </div>
+                </td>
+            {% else %}
+                <td colspan="3" class="text-muted">No bank account</td>
+            {% endif %}
 
-                <td>
+            <td>
+                <div class="d-flex align-items-center gap-2">
                     {% if user.is_active %}
                     <span class="badge bg-success">Active</span>
+                    <form method="POST" action="{{ url_for('blacklist_user', user_id=user.user_id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-primary btn-sm">Blacklist</button>
+                    </form>
                     {% else %}
                     <span class="badge bg-danger">Blacklisted</span>
-                    {% endif %}
-                </td>
-
-                <td>
-                    {% if user.is_active %}
-                        <form method="POST" action="{{ url_for('blacklist_user', user_id=user.user_id) }}" class="d-inline">
-                            <button type="submit" class="btn btn-danger btn-sm">Blacklist</button>
-                        </form>
-                    {% else %}
-                        <form method="POST" action="{{ url_for('activate_user', user_id=user.user_id) }}" class="d-inline">
-                            <button type="submit" class="btn btn-success btn-sm">Activate</button>
-                        </form>
-                    {% endif %}
-
-                    {% if user.bank_account %}
-                    <form method="POST" action="{{ url_for('admin_update_account_status', user_id=user.user_id) }}" class="d-inline">
-                        <select name="status" class="form-select form-select-sm d-inline w-auto" required>
-                            <option value="Active" {% if user.bank_account.status == "Active" %}selected{% endif %}>Active</option>
-                            <option value="Frozen" {% if user.bank_account.status == "Frozen" %}selected{% endif %}>Frozen</option>
-                            <option value="Closed" {% if user.bank_account.status == "Closed" %}selected{% endif %}>Closed</option>
-                        </select>
-                        <button type="submit" class="btn btn-warning btn-sm">Set</button>
+                    <form method="POST" action="{{ url_for('activate_user', user_id=user.user_id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-primary btn-sm">Activate</button>
                     </form>
                     {% endif %}
-                </td>
+                </div>
+            </td>
 
-                <td>
-                    {% if user.assigned_pro %}
-                        {{ user.assigned_pro.employee_code }} - {{ user.assigned_pro.name }}
-                    {% else %}
-                        Unassigned
-                    {% endif %}
-                </td>
-
-                <td>
-                    <form method="POST"
-                        action="{{ url_for('assign_pro', user_id=user.user_id) }}">
-
-                        <select name="pro_id" class="form-select form-select-sm mb-2" required>
-                            <option value="">Select PRO</option>
-                            {% for pro in pros %}
-                                {% if pro.is_approved and not pro.is_blacklisted and pro.is_active %}
-                                    <option value="{{ pro.pro_id }}"
-                                        {% if user.assigned_pro_id == pro.pro_id %}selected{% endif %}>
-                                        {{ pro.employee_code }} - {{ pro.name }}
-                                    </option>
-                                {% endif %}
-                            {% endfor %}
-                        </select>
-                        <button type="submit" class="btn btn-primary btn-sm">Assign</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    {% else %}
-
-    <div class="alert alert-info mt-4">
-        No registered users found.
-    </div>
-
-    {% endif %}
-
+            <td>
+                <form method="POST" action="{{ url_for('assign_pro', user_id=user.user_id) }}" class="d-flex gap-1 align-items-center">
+                    <select name="pro_id" class="form-select form-select-sm" style="width:130px;" required>
+                        <option value="">
+                            {% if user.assigned_pro %}{{ user.assigned_pro.employee_code }} – {{ user.assigned_pro.name }}{% else %}Select PRO{% endif %}
+                        </option>
+                        {% for pro in pros %}
+                            {% if pro.is_approved and not pro.is_blacklisted and pro.is_active %}
+                                <option value="{{ pro.pro_id }}">{{ pro.employee_code }} – {{ pro.name }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-primary btn-sm">Assign</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 </div>
+
+{% else %}
+
+<div class="alert alert-info mt-4">No registered users found.</div>
+
+{% endif %}
 
 {% endblock %}

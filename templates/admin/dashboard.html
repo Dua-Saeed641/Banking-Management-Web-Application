@@ -2,53 +2,115 @@
 
 {% block content %}
 
-<div class="container mt-5">
+<h2 class="mb-4">Admin Dashboard</h2>
 
-    <h2>Admin Dashboard</h2>
+<div class="row g-3 mb-4">
 
-    <div class="row mt-4">
-
-        <div class="col-md-4 mb-3">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5>Total Users</h5>
-                    <h3>{{ total_users }}</h3>
-                    <p class="mb-0">Active: {{ active_users }}</p>
-                </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm stat-card">
+            <div class="card-body">
+                <h5>Total Users</h5>
+                <h3>{{ total_users }}</h3>
+                <p>Active: {{ active_users }}</p>
             </div>
         </div>
-
-        <div class="col-md-4 mb-3">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5>Total PROs</h5>
-                    <h3>{{ total_pros }}</h3>
-                    <p class="mb-0">Pending Requests: {{ pending_pros }}</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4 mb-3">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5>Active Banking Schemes</h5>
-                    <h3>{{ active_schemes }}</h3>
-                </div>
-            </div>
-        </div>
-
     </div>
 
-    <hr class="my-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm stat-card">
+            <div class="card-body">
+                <h5>Total PROs</h5>
+                <h3>{{ total_pros }}</h3>
+                <p>Pending Requests: {{ pending_pros }}</p>
+            </div>
+        </div>
+    </div>
 
-    <div class="d-flex flex-wrap gap-2">
-        <a href="{{ url_for('admin_users') }}" class="btn btn-primary">Manage Users</a>
-        <a href="{{ url_for('pro_requests') }}" class="btn btn-warning">PRO Requests</a>
-        <a href="{{ url_for('manage_pros') }}" class="btn btn-info">Manage PROs</a>
-        <a href="{{ url_for('admin_schemes') }}" class="btn btn-success">Manage Schemes</a>
-        <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+    <div class="col-md-4">
+        <div class="card shadow-sm stat-card">
+            <div class="card-body">
+                <h5>Active Schemes</h5>
+                <h3>{{ active_schemes }}</h3>
+                <p>&nbsp;</p>
+            </div>
+        </div>
     </div>
 
 </div>
+
+<div class="row g-3 mb-4">
+
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="mb-3">User Status</h5>
+                <canvas id="userChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="mb-3">Overview</h5>
+                <canvas id="overviewChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<hr class="my-3">
+
+<div class="d-flex flex-wrap gap-2">
+    <a href="{{ url_for('admin_users') }}" class="btn btn-primary">Manage Users</a>
+    <a href="{{ url_for('pro_requests') }}" class="btn btn-primary">PRO Requests</a>
+    <a href="{{ url_for('manage_pros') }}" class="btn btn-primary">Manage PROs</a>
+    <a href="{{ url_for('admin_schemes') }}" class="btn btn-primary">Manage Schemes</a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const primaryBlue = '#2563eb';
+const lightBlue   = '#93c5fd';
+const gray        = '#e5e7eb';
+
+new Chart(document.getElementById('userChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Active Users', 'Inactive Users'],
+        datasets: [{
+            data: [{{ active_users }}, {{ total_users - active_users }}],
+            backgroundColor: [primaryBlue, gray],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 12 } } } },
+        cutout: '65%'
+    }
+});
+
+new Chart(document.getElementById('overviewChart'), {
+    type: 'bar',
+    data: {
+        labels: ['Total Users', 'Active Users', 'Total PROs', 'Pending PROs', 'Active Schemes'],
+        datasets: [{
+            label: 'Count',
+            data: [{{ total_users }}, {{ active_users }}, {{ total_pros }}, {{ pending_pros }}, {{ active_schemes }}],
+            backgroundColor: primaryBlue,
+            borderRadius: 6,
+            borderSkipped: false
+        }]
+    },
+    options: {
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 } } },
+            y: { grid: { color: '#f3f4f6' }, ticks: { font: { family: 'Inter', size: 11 }, stepSize: 1 }, beginAtZero: true }
+        }
+    }
+});
+</script>
 
 {% endblock %}

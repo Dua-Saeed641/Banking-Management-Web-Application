@@ -9,7 +9,7 @@
     <div class="row mt-4">
 
         <div class="col-md-3 mb-3">
-            <div class="card shadow-sm">
+            <div class="card shadow-sm stat-card">
                 <div class="card-body">
                     <h5>Assigned Customers</h5>
                     <h3>{{ assigned_customers }}</h3>
@@ -18,7 +18,7 @@
         </div>
 
         <div class="col-md-3 mb-3">
-            <div class="card shadow-sm">
+            <div class="card shadow-sm stat-card">
                 <div class="card-body">
                     <h5>Pending</h5>
                     <h3>{{ pending_recommendations }}</h3>
@@ -27,7 +27,7 @@
         </div>
 
         <div class="col-md-3 mb-3">
-            <div class="card shadow-sm">
+            <div class="card shadow-sm stat-card">
                 <div class="card-body">
                     <h5>Accepted</h5>
                     <h3>{{ accepted_recommendations }}</h3>
@@ -36,7 +36,7 @@
         </div>
 
         <div class="col-md-3 mb-3">
-            <div class="card shadow-sm">
+            <div class="card shadow-sm stat-card">
                 <div class="card-body">
                     <h5>Rejected</h5>
                     <h3>{{ rejected_recommendations }}</h3>
@@ -57,8 +57,7 @@
 
     <div class="d-flex flex-wrap gap-2">
         <a href="{{ url_for('pro_customers') }}" class="btn btn-primary">My Customers</a>
-        <a href="{{ url_for('pro_recommendations') }}" class="btn btn-info">My Recommendations</a>
-        <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+        <a href="{{ url_for('pro_recommendations') }}" class="btn btn-primary">My Recommendations</a>
     </div>
 
 </div>

@@ -9,7 +9,7 @@
     <div class="row mt-4">
 
         <div class="col-md-3 mb-3">
-            <div class="card shadow-sm">
+            <div class="card shadow-sm stat-card">
                 <div class="card-body">
                     <h5>Current Balance</h5>
                     <h3>₹{{ "%.2f"|format(account.balance) }}</h3>
@@ -27,7 +27,7 @@
         </div>
 
         <div class="col-md-3 mb-3">
-            <div class="card shadow-sm">
+            <div class="card shadow-sm stat-card">
                 <div class="card-body">
                     <h5>Active Scheme</h5>
                     {% if account.scheme %}
@@ -41,7 +41,7 @@
         </div>
 
         <div class="col-md-3 mb-3">
-            <div class="card shadow-sm">
+            <div class="card shadow-sm stat-card">
                 <div class="card-body">
                     <h5>Pending Recommendations</h5>
                     <h3>{{ pending_recommendations }}</h3>
@@ -50,7 +50,7 @@
         </div>
 
         <div class="col-md-3 mb-3">
-            <div class="card shadow-sm">
+            <div class="card shadow-sm stat-card">
                 <div class="card-body">
                     <h5>Assigned PRO</h5>
                     {% if user.assigned_pro %}
@@ -119,11 +119,10 @@
     <hr class="my-4">
 
     <div class="d-flex flex-wrap gap-2">
-        <a href="{{ url_for('deposit') }}" class="btn btn-success">Deposit</a>
-        <a href="{{ url_for('user_withdraw') }}" class="btn btn-danger">Withdraw</a>
+        <a href="{{ url_for('deposit') }}" class="btn btn-primary">Deposit</a>
+        <a href="{{ url_for('user_withdraw') }}" class="btn btn-primary">Withdraw</a>
         <a href="{{ url_for('transaction_history') }}" class="btn btn-primary">All Transactions</a>
-        <a href="{{ url_for('user_schemes') }}" class="btn btn-info">My Schemes</a>
-        <a href="{{ url_for('logout') }}" class="btn btn-secondary">Logout</a>
+        <a href="{{ url_for('user_schemes') }}" class="btn btn-primary">My Schemes</a>
     </div>
 
 </div>
