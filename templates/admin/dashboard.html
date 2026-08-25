@@ -4,28 +4,50 @@
 
 <div class="container mt-5">
 
-    <h2>Welcome, {{ current_user.admin_name }}</h2>
+    <h2>Admin Dashboard</h2>
 
-    <hr>
+    <div class="row mt-4">
 
-    <h3>Admin Dashboard</h3>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5>Total Users</h5>
+                    <h3>{{ total_users }}</h3>
+                    <p class="mb-0">Active: {{ active_users }}</p>
+                </div>
+            </div>
+        </div>
 
-    <br>
-    <a href="{{ url_for('admin_schemes') }}">Manage Banking Schemes</a>
-    <br>
-    <br>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5>Total PROs</h5>
+                    <h3>{{ total_pros }}</h3>
+                    <p class="mb-0">Pending Requests: {{ pending_pros }}</p>
+                </div>
+            </div>
+        </div>
 
-    <br>
-    <a href="{{ url_for('admin_users') }}">Manage Users</a>
-    <br>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5>Active Banking Schemes</h5>
+                    <h3>{{ active_schemes }}</h3>
+                </div>
+            </div>
+        </div>
 
-    
-    <br>
-    <a href="{{ url_for('pro_requests') }}">PRO Registration Requests</a>
-    <br>
-    <a href="{{ url_for('manage_pros') }}">Manage PROs</a>
-    <br>
-    <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+
+    <hr class="my-4">
+
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('admin_users') }}" class="btn btn-primary">Manage Users</a>
+        <a href="{{ url_for('pro_requests') }}" class="btn btn-warning">PRO Requests</a>
+        <a href="{{ url_for('manage_pros') }}" class="btn btn-info">Manage PROs</a>
+        <a href="{{ url_for('admin_schemes') }}" class="btn btn-success">Manage Schemes</a>
+        <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+    </div>
 
 </div>
 

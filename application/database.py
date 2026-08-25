@@ -8,4 +8,4 @@ db=SQLAlchemy()
 login_manager=LoginManager()
 #for all authentication tasks and route 
 
-login_manager.login_view="login"
+login_manager.login_view="home"

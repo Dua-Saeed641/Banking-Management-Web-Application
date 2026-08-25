@@ -109,7 +109,7 @@
 
                     <select name="status" class="form-select d-inline w-auto" required>
                         <option value="Active" {% if user.bank_account.status == "Active" %}selected{% endif %}>Active</option>
-                        <option value="Blocked" {% if user.bank_account.status == "Blocked" %}selected{% endif %}>Blocked</option>
+                        <option value="Frozen" {% if user.bank_account.status == "Frozen" %}selected{% endif %}>Frozen</option>
                         <option value="Closed" {% if user.bank_account.status == "Closed" %}selected{% endif %}>Closed</option>
                     </select>
 

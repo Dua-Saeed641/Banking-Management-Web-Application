@@ -55,6 +55,21 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def pro_required(f):
+    @wraps(f)
+    @login_required
+    def decorated_function(*args, **kwargs):
+        if not isinstance(current_user, PRO):
+            return "Unauthorized", 403
+        if not current_user.is_approved:
+            return "Your PRO account is not approved.", 403
+        if current_user.is_blacklisted:
+            return "Your PRO account has been blacklisted.", 403
+        if not current_user.is_active:
+            return "Your PRO account is inactive.", 403
+        return f(*args, **kwargs)
+    return decorated_function
+
 @app.route("/")
 def home():
     return render_template("home.html")
@@ -157,7 +172,6 @@ def login(role):
 
     email = request.form["email"].strip().lower()
     password = request.form["password"]
-#Admin login
     if role.lower() == "admin":
         admin = Admin.query.filter_by(admin_email=email).first()
 
@@ -172,7 +186,6 @@ def login(role):
         flash("Invalid admin email or password.", "danger")
         return redirect(url_for("login", role="admin"))
 
-#PRO login
     if role == "pro":
         pro = PRO.query.filter_by(email=email).first()
 
@@ -191,7 +204,6 @@ def login(role):
         login_user(pro)
 
         return redirect(url_for("pro_dashboard"))
-#user login
     if role.lower() == "user":
         user = User.query.filter_by(email=email).first()
         if user is None:
@@ -212,6 +224,12 @@ def login(role):
                 role=role,
                 login_error="Invalid email or password."
             )
+        if user.bank_account and user.bank_account.status == "Closed":
+            return render_template(
+                "auth/login.html",
+                role=role,
+                login_error="Your bank account has been closed. Please contact support."
+            )
 
         login_user(user)
 
@@ -219,16 +237,39 @@ def login(role):
     return "Login for this role is not implemented yet."
 
 @app.route("/admin/dashboard")
+@login_required
 @admin_required
 def admin_dashboard():
-    return render_template("admin/dashboard.html")
+
+    total_users = User.query.count()
+
+    active_users = User.query.filter_by(
+        is_active=True
+    ).count()
+
+    total_pros = PRO.query.count()
+
+    pending_pros = PRO.query.filter_by(
+        is_approved=False,
+        is_blacklisted=False
+    ).count()
+
+    active_schemes = BankingScheme.query.filter_by(
+        status="Active"
+    ).count()
+
+    return render_template(
+        "admin/dashboard.html",
+        total_users=total_users,
+        active_users=active_users,
+        total_pros=total_pros,
+        pending_pros=pending_pros,
+        active_schemes=active_schemes
+    )
 
 @app.route("/admin/users")
-@login_required
+@admin_required
 def admin_users():
-    if not isinstance(current_user, Admin):
-        return "Unauthorized", 403
-
     users = User.query.all()
     pros = PRO.query.all()
 
@@ -303,11 +344,8 @@ def toggle_scheme(scheme_id):
     return redirect(url_for("admin_schemes"))
 
 @app.route("/admin/users/<int:user_id>/assign-pro", methods=["POST"])
-@login_required
+@admin_required
 def assign_pro(user_id):
-    if not isinstance(current_user, Admin):
-        return "Unauthorized", 403
-
     user = User.query.get_or_404(user_id)
 
     pro_id = request.form.get("pro_id")
@@ -395,11 +433,17 @@ def user_dashboard():
         account_id=account.account_id
     ).order_by(Transaction.transaction_date.desc()).limit(5).all()
 
+    pending_recommendations = UserScheme.query.filter_by(
+        user_id=current_user.user_id,
+        status="Pending"
+    ).count()
+
     return render_template(
         "user/dashboard.html",
         user=current_user,
         account=account,
-        recent_transactions=recent_transactions
+        recent_transactions=recent_transactions,
+        pending_recommendations=pending_recommendations
     )
 
 @app.route("/pro/dashboard")
@@ -420,17 +464,38 @@ def pro_dashboard():
         logout_user()
         return "Your PRO account is not approved.", 403
 
+    assigned_customers = User.query.filter_by(
+        assigned_pro_id=current_user.pro_id,
+        is_active=True
+    ).count()
+
+    pending_recommendations = UserScheme.query.filter_by(
+        assigned_by_pro=current_user.pro_id,
+        status="Pending"
+    ).count()
+
+    accepted_recommendations = UserScheme.query.filter_by(
+        assigned_by_pro=current_user.pro_id,
+        status="Accepted"
+    ).count()
+
+    rejected_recommendations = UserScheme.query.filter_by(
+        assigned_by_pro=current_user.pro_id,
+        status="Rejected"
+    ).count()
+
     return render_template(
         "pro/dashboard.html",
-        pro=current_user
+        pro=current_user,
+        assigned_customers=assigned_customers,
+        pending_recommendations=pending_recommendations,
+        accepted_recommendations=accepted_recommendations,
+        rejected_recommendations=rejected_recommendations
     )
 
 @app.route("/pro/customers")
-@login_required
+@pro_required
 def pro_customers():
-    if not isinstance(current_user, PRO):
-        return "Unauthorized", 403
-
     customers = User.query.filter_by(
         assigned_pro_id=current_user.pro_id,
         is_active=True
@@ -440,10 +505,8 @@ def pro_customers():
 
 
 @app.route("/pro/customers/<int:user_id>")
-@login_required
+@pro_required
 def pro_customer_details(user_id):
-    if not isinstance(current_user, PRO):
-        return "Unauthorized", 403
 
     user = User.query.filter_by(
         user_id=user_id,
@@ -474,10 +537,8 @@ def pro_customer_details(user_id):
 
 
 @app.route("/pro/customers/<int:user_id>/recommend-scheme", methods=["POST"])
-@login_required
+@pro_required
 def recommend_scheme(user_id):
-    if not isinstance(current_user, PRO):
-        return "Unauthorized", 403
 
     user = User.query.filter_by(
         user_id=user_id,
@@ -537,10 +598,8 @@ def recommend_scheme(user_id):
     return redirect(url_for("pro_customer_details", user_id=user.user_id))
 
 @app.route("/pro/recommendations")
-@login_required
+@pro_required
 def pro_recommendations():
-    if not isinstance(current_user, PRO):
-        return "Unauthorized", 403
 
     recommendations = UserScheme.query.filter_by(
         assigned_by_pro=current_user.pro_id
@@ -549,10 +608,8 @@ def pro_recommendations():
     return render_template("pro/recommendations.html", recommendations=recommendations)
 
 @app.route("/pro/customers/<int:user_id>/transactions")
-@login_required
+@pro_required
 def pro_customer_transactions(user_id):
-    if not isinstance(current_user, PRO):
-        return "Unauthorized", 403
 
     user = User.query.filter_by(
         user_id=user_id,
@@ -571,10 +628,8 @@ def pro_customer_transactions(user_id):
     return render_template("pro/customer_transactions.html",user=user, transactions=transactions)
 
 @app.route("/pro/customers/<int:user_id>/account-status", methods=["POST"])
-@login_required
+@pro_required
 def pro_update_account_status(user_id):
-    if not isinstance(current_user, PRO):
-        return "Unauthorized", 403
 
     user = User.query.filter_by(
         user_id=user_id,
@@ -588,7 +643,7 @@ def pro_update_account_status(user_id):
 
     status = request.form.get("status")
 
-    if status not in ["Active", "Blocked", "Closed"]:
+    if status not in ["Active", "Frozen", "Closed"]:
         flash("Invalid account status.", "danger")
         return redirect(url_for("pro_customer_details", user_id=user.user_id))
 
@@ -639,25 +694,19 @@ def blacklist_pro(pro_id):
 
     db.session.commit()
 
-    flash("PRO has been blacklisted.", "success")
+    flash("PRO has been blacklisted.", "warning")
     return redirect(url_for("pro_requests"))
 
 @app.route("/admin/pros")
-@login_required
+@admin_required
 def manage_pros():
-    if not isinstance(current_user, Admin):
-        return "Unauthorized", 403
-
     pros = PRO.query.order_by(PRO.pro_id.desc()).all()
 
     return render_template("admin/manage_pros.html", pros=pros)
 
 @app.route("/admin/pros/<int:pro_id>/customers")
-@login_required
+@admin_required
 def admin_pro_customers(pro_id):
-    if not isinstance(current_user, Admin):
-        return "Unauthorized", 403
-
     pro = PRO.query.get_or_404(pro_id)
 
     customers = User.query.filter_by(
@@ -695,16 +744,17 @@ def admin_pro_detail(pro_id):
     )
 
 @app.route("/admin/pros/<int:pro_id>/toggle-blacklist", methods=["POST"])
-@login_required
+@admin_required
 def toggle_pro_blacklist(pro_id):
-    if not isinstance(current_user, Admin):
-        return "Unauthorized", 403
-
     pro = PRO.query.get_or_404(pro_id)
 
     pro.is_blacklisted = not pro.is_blacklisted
-
     db.session.commit()
+
+    if pro.is_blacklisted:
+        flash(f"{pro.name} has been blacklisted.", "warning")
+    else:
+        flash(f"{pro.name} has been removed from blacklist.", "success")
 
     return redirect(url_for("manage_pros"))
 
@@ -771,6 +821,7 @@ def deposit():
     db.session.add(transaction)
     db.session.commit()
 
+    flash(f"₹{amount:.2f} deposited successfully.", "success")
     return redirect(url_for("user_dashboard"))
 
 @app.route("/user/withdraw", methods=["GET", "POST"])
@@ -847,6 +898,11 @@ def transaction_history():
 
     if not isinstance(current_user, User):
         return "Unauthorized", 403
+
+    if not current_user.is_active:
+        logout_user()
+        flash("Your account has been deactivated.", "danger")
+        return redirect(url_for("login", role="user"))
 
     account = current_user.bank_account
     if account is None:
@@ -963,6 +1019,11 @@ def accept_scheme(user_scheme_id):
 def reject_scheme(user_scheme_id):
     if not isinstance(current_user, User):
         return "Unauthorized", 403
+
+    if not current_user.is_active:
+        logout_user()
+        flash("Your account has been deactivated.", "danger")
+        return redirect(url_for("login", role="user"))
 
     recommendation = UserScheme.query.filter_by(
         user_scheme_id=user_scheme_id,

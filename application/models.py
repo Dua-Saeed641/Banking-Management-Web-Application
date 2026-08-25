@@ -1,6 +1,3 @@
-#1 designing models before writing any controllers, to have full knowledge of each entity
-#User--1:1-->BankAccount,PROProfile
-
 from application.database import db
 from flask_login import UserMixin
 from datetime import datetime 
@@ -26,13 +23,13 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120),unique=True,nullable=False)
     password = db.Column(db.String(255),nullable=False)
     is_active = db.Column(db.Boolean,default=True)
-    created_at = db.Column(db.DateTime,default=datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime,default=lambda: datetime.now(timezone.utc))
     assigned_pro_id = db.Column(db.Integer,db.ForeignKey("pros.pro_id"),nullable=True)
     assigned_pro = db.relationship("PRO",backref="customers",foreign_keys=[assigned_pro_id])
     def get_id(self):
         return f"user-{self.user_id}"
 
-    bank_account = db.relationship("BankAccount",backref="user",uselist=False) # because one user-->one bank account only
+    bank_account = db.relationship("BankAccount",backref="user",uselist=False)
     scheme_assignments = db.relationship("UserScheme",backref="user",lazy=True)
 
 class PRO(UserMixin, db.Model):
@@ -45,7 +42,7 @@ class PRO(UserMixin, db.Model):
     employee_code = db.Column(db.String(20),unique=True,nullable=True)
     contact_number = db.Column(db.String(10),nullable=False)
     experience = db.Column(db.Integer,default=0)
-    joining_date = db.Column(db.Date,default=datetime.now(timezone.utc))
+    joining_date = db.Column(db.Date,default=lambda: datetime.now(timezone.utc))
     is_approved = db.Column(db.Boolean,default=False)
     is_blacklisted = db.Column(db.Boolean,default=False)
     is_active = db.Column(db.Boolean,default=True)
@@ -64,7 +61,7 @@ class BankAccount(db.Model):
     balance = db.Column(db.Float,nullable=False,default=0.0)
     minimum_balance = db.Column(db.Float,nullable=False,default=1000.0)
     ifsc_code = db.Column(db.String(20),nullable=False)
-    opening_date = db.Column(db.Date,default=datetime.now(timezone.utc))
+    opening_date = db.Column(db.Date,default=lambda: datetime.now(timezone.utc))
     status = db.Column(db.String(20),nullable=False,default="Active")
     last_transaction_date = db.Column(db.DateTime,nullable=True)
     scheme_id = db.Column(db.Integer,db.ForeignKey("banking_schemes.scheme_id"),nullable=True)
@@ -81,7 +78,7 @@ class Transaction(db.Model):
     transaction_type = db.Column(db.String(20),nullable=False)
     amount = db.Column(db.Float,nullable=False)
     balance_after_transaction = db.Column(db.Float,nullable=False)
-    transaction_date = db.Column(db.DateTime,default=datetime.now(timezone.utc))
+    transaction_date = db.Column(db.DateTime,default=lambda: datetime.now(timezone.utc))
     status = db.Column(db.String(20),nullable=False,default="Successful")
 
 class BankingScheme(db.Model):
@@ -93,7 +90,7 @@ class BankingScheme(db.Model):
     minimum_balance_required = db.Column(db.Float, nullable=False,default=0.0)
     interest_rate = db.Column(db.Float,nullable=False,default=0.0)
     status = db.Column(db.String(20),nullable=False,default="Active")
-    created_at = db.Column(db.DateTime,default=datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime,default=lambda: datetime.now(timezone.utc))
 
     user_assignments = db.relationship("UserScheme",backref="scheme",lazy=True)
 
@@ -105,6 +102,6 @@ class UserScheme(db.Model):
     user_id = db.Column(db.Integer,db.ForeignKey("users.user_id"),nullable=False)
     scheme_id = db.Column(db.Integer,db.ForeignKey("banking_schemes.scheme_id"),nullable=False)
     assigned_by_pro = db.Column(db.Integer,db.ForeignKey("pros.pro_id"),nullable=False)
-    assigned_date = db.Column(db.DateTime,default=datetime.now(timezone.utc))
+    assigned_date = db.Column(db.DateTime,default=lambda: datetime.now(timezone.utc))
     status = db.Column(db.String(20),nullable=False,default="Pending")
 
