@@ -2,64 +2,55 @@
 
 {% block content %}
 
-<div class="container mt-5">
+<div class="page-header">
+    <div>
+        <h2 class="page-title">Deposit Money</h2>
+        <p class="page-subtitle">Add funds to your savings account balance.</p>
+    </div>
+</div>
 
-    <div class="card shadow">
+<div class="form-card">
 
-        <div class="card-body">
+    <div class="p-3 bg-light rounded-3 border mb-4 d-flex justify-content-between align-items-center">
+        <span class="text-muted small">Current Balance</span>
+        <strong class="fs-5 text-dark">₹{{ "{:,.2f}".format(account.balance) }}</strong>
+    </div>
 
-            <h2>Deposit Money</h2>
+    {% if deposit_error %}
+        <div class="alert alert-danger mb-4">
+            <i class="bi bi-exclamation-circle me-1"></i> {{ deposit_error }}
+        </div>
+    {% endif %}
 
-            <hr>
-
-            <p>
-                <strong>Current Balance:</strong>
-                ₹{{ "%.2f"|format(account.balance) }}
-            </p>
-
-            {% if deposit_error %}
-                <div class="alert alert-danger">
-                    {{ deposit_error }}
-                </div>
-            {% endif %}
-
-            <form method="POST">
-
-                <div class="mb-3">
-
-                    <label class="form-label">
-                        Deposit Amount
-                    </label>
-
-                    <input
-                        type="number"
-                        name="amount"
-                        class="form-control"
-                        min="1"
-                        step="0.01"
-                        required
-                    >
-
-                </div>
-
-                <button
-                    type="submit"
-                    class="btn btn-success">
-                    Deposit
-                </button>
-
-                <a
-                    href="{{ url_for('user_dashboard') }}"
-                    class="btn btn-secondary">
-                    Cancel
-                </a>
-
-            </form>
-
+    <form method="POST">
+        <div class="mb-4">
+            <label class="form-label fw-semibold text-dark">
+                Deposit Amount (₹)
+            </label>
+            <div class="input-group">
+                <span class="input-group-text bg-white text-muted">₹</span>
+                <input
+                    type="number"
+                    name="amount"
+                    class="form-control form-control-lg fs-6"
+                    placeholder="Enter amount (e.g. 5000)"
+                    min="1"
+                    step="0.01"
+                    required
+                >
+            </div>
         </div>
 
-    </div>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i> Deposit Funds
+            </button>
+            <a href="{{ url_for('user_dashboard') }}" class="btn btn-outline-secondary">
+                Cancel
+            </a>
+        </div>
+    </form>
 
 </div>
 
-{% endblock %}
+{% endblock %}

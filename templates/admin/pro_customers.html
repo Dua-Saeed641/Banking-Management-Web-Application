@@ -2,65 +2,69 @@
 
 {% block content %}
 
-<div class="container mt-5">
-
-    <h2>{{ pro.name }}'s Customers</h2>
-
-    {% if customers %}
-
-    <table class="table table-bordered table-striped mt-4">
-
-        <thead>
-            <tr>
-                <th>User ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Account Number</th>
-                <th>Balance</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-
-        <tbody>
-
-            {% for user in customers %}
-
-            <tr>
-
-                <td>{{ user.user_id }}</td>
-                <td>{{ user.name }}</td>
-                <td>{{ user.email }}</td>
-
-                {% if user.bank_account %}
-
-                    <td>{{ user.bank_account.account_number }}</td>
-                    <td>{{ "%.2f"|format(user.bank_account.balance) }}</td>
-                    <td>{{ user.bank_account.status }}</td>
-
-                {% else %}
-
-                    <td colspan="3">No bank account</td>
-
-                {% endif %}
-
-            </tr>
-
-            {% endfor %}
-
-        </tbody>
-
-    </table>
-
-    {% else %}
-
-    <div class="alert alert-info mt-4">
-        No customers are currently assigned to this PRO.
+<div class="page-header">
+    <div>
+        <h2 class="page-title">{{ pro.name }}'s Assigned Customers</h2>
+        <p class="page-subtitle">Customer portfolio list for relationship manager {{ pro.name }}.</p>
     </div>
+    <a href="{{ url_for('manage_pros') }}" class="btn btn-outline-secondary btn-sm">
+        Back to Manage PROs
+    </a>
+</div>
 
-    {% endif %}
-
-    <a href="{{ url_for('manage_pros') }}" class="btn btn-secondary">Back to PROs</a>
-
+<div class="dashboard-card">
+    <div class="dashboard-card-header">
+        <h3 class="dashboard-card-title">
+            <i class="bi bi-people-fill text-primary"></i> Customer Portfolio
+        </h3>
+    </div>
+    <div class="dashboard-card-body p-0">
+        {% if customers %}
+        <div class="table-responsive">
+            <table class="banking-table">
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Customer Name</th>
+                        <th>Email Address</th>
+                        <th>Account Number</th>
+                        <th>Balance</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in customers %}
+                    <tr>
+                        <td class="text-muted font-monospace">#{{ user.user_id }}</td>
+                        <td><strong class="text-dark">{{ user.name }}</strong></td>
+                        <td class="text-secondary small">{{ user.email }}</td>
+                        {% if user.bank_account %}
+                            <td class="txn-ref">{{ user.bank_account.account_number }}</td>
+                            <td><strong class="text-dark">₹{{ "{:,.2f}".format(user.bank_account.balance) }}</strong></td>
+                            <td>
+                                {% if user.bank_account.status == 'Active' %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary-subtle text-secondary">{{ user.bank_account.status }}</span>
+                                {% endif %}
+                            </td>
+                        {% else %}
+                            <td colspan="3" class="text-muted small">No bank account</td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-person-x empty-state-icon"></i>
+            <h5 class="fw-bold text-dark mb-1">No Customers Assigned</h5>
+            <p class="text-muted small mb-0">No customer bank accounts are currently assigned to this PRO.</p>
+        </div>
+        {% endif %}
+    </div>
 </div>
 
 {% endblock %}
+

@@ -2,129 +2,175 @@
 
 {% block content %}
 
-<div class="container mt-5">
+<div class="page-header">
+    <div>
+        <h2 class="page-title">My Banking Schemes</h2>
+        <p class="page-subtitle">Manage your active banking products and review PRO recommendations.</p>
+    </div>
+    <a href="{{ url_for('user_dashboard') }}" class="btn btn-outline-secondary btn-sm">
+        Back to Dashboard
+    </a>
+</div>
 
-    <h2>My Banking Schemes</h2>
-
-    <hr>
-
-    <h4>Active Scheme</h4>
-
+<!-- Active Scheme Section -->
+<div class="mb-5">
+    <div class="section-label">Active Banking Scheme</div>
     {% if active %}
-
-    <div class="card mt-3 border-success">
-
-        <div class="card-body">
-
-            <h5>{{ active.scheme.scheme_name }}</h5>
-
-            <p><strong>Description:</strong> {{ active.scheme.description }}</p>
-            <p><strong>Interest Rate:</strong> {{ active.scheme.interest_rate }}%</p>
-            <p><strong>Minimum Balance:</strong> ₹{{ "%.2f"|format(active.scheme.minimum_balance_required) }}</p>
-            <p><strong>Recommended By:</strong> {{ active.pro.name }}</p>
-            <p><strong>Date:</strong> {{ active.assigned_date.strftime("%d-%m-%Y") }}</p>
-            <p><strong>Status:</strong> <span class="badge bg-success">Accepted</span></p>
-
+        <div class="dashboard-card border-success-subtle shadow-sm">
+            <div class="dashboard-card-header bg-success-subtle bg-opacity-25">
+                <h3 class="dashboard-card-title text-success">
+                    <i class="bi bi-star-fill text-warning"></i> {{ active.scheme.scheme_name }}
+                </h3>
+                <span class="badge bg-success-subtle text-success border border-success-subtle badge-pill">Active</span>
+            </div>
+            <div class="dashboard-card-body">
+                <p class="text-muted mb-4">{{ active.scheme.description }}</p>
+                <div class="row g-3">
+                    <div class="col-md-3 col-6">
+                        <span class="text-muted small d-block">Interest Rate</span>
+                        <strong class="fs-5 text-success">{{ active.scheme.interest_rate }}% p.a.</strong>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <span class="text-muted small d-block">Min. Balance</span>
+                        <strong class="fs-5 text-dark">₹{{ "{:,.0f}".format(active.scheme.minimum_balance_required) }}</strong>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <span class="text-muted small d-block">Recommended By</span>
+                        <strong class="text-dark">{{ active.pro.name }}</strong>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <span class="text-muted small d-block">Assigned Date</span>
+                        <span class="text-secondary">{{ active.assigned_date.strftime("%d %b %Y") }}</span>
+                    </div>
+                </div>
+            </div>
         </div>
-
-    </div>
-
     {% else %}
-
-    <div class="alert alert-info mt-3">
-        No active banking scheme on your account.
-    </div>
-
+        <div class="dashboard-card">
+            <div class="empty-state">
+                <i class="bi bi-shield-slash empty-state-icon"></i>
+                <h5 class="fw-bold text-dark mb-1">No Active Banking Scheme</h5>
+                <p class="text-muted small mb-0">Your account is currently using standard account default rates.</p>
+            </div>
+        </div>
     {% endif %}
+</div>
 
-    <hr class="mt-4">
-
-    <h4>Pending Recommendations</h4>
-
+<!-- Pending Recommendations -->
+<div class="mb-5">
+    <div class="section-label">Pending Recommendations</div>
     {% if pending %}
+        <div class="row g-4">
+            {% for recommendation in pending %}
+            <div class="col-lg-6">
+                <div class="dashboard-card border-warning-subtle">
+                    <div class="dashboard-card-header bg-warning-subtle bg-opacity-25">
+                        <h3 class="dashboard-card-title text-dark">
+                            <i class="bi bi-award-fill text-warning"></i> {{ recommendation.scheme.scheme_name }}
+                        </h3>
+                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle badge-pill">Pending Response</span>
+                    </div>
+                    <div class="dashboard-card-body">
+                        <p class="text-muted small mb-3">{{ recommendation.scheme.description }}</p>
+                        
+                        <div class="row g-2 mb-4 bg-light p-3 rounded-3 border">
+                            <div class="col-6">
+                                <span class="text-muted small d-block">Interest Rate</span>
+                                <strong class="text-success">{{ recommendation.scheme.interest_rate }}% p.a.</strong>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted small d-block">Min. Balance Required</span>
+                                <strong class="text-dark">₹{{ "{:,.0f}".format(recommendation.scheme.minimum_balance_required) }}</strong>
+                            </div>
+                            <div class="col-6 mt-2">
+                                <span class="text-muted small d-block">Recommended By</span>
+                                <span class="text-dark font-semibold">{{ recommendation.pro.name }}</span>
+                            </div>
+                            <div class="col-6 mt-2">
+                                <span class="text-muted small d-block">Date Offered</span>
+                                <span class="text-muted">{{ recommendation.assigned_date.strftime("%d %b %Y") }}</span>
+                            </div>
+                        </div>
 
-        {% for recommendation in pending %}
-
-        <div class="card mt-3">
-
-            <div class="card-body">
-
-                <h5>{{ recommendation.scheme.scheme_name }}</h5>
-
-                <p><strong>Description:</strong> {{ recommendation.scheme.description }}</p>
-                <p><strong>Interest Rate:</strong> {{ recommendation.scheme.interest_rate }}%</p>
-                <p><strong>Minimum Balance:</strong> ₹{{ "%.2f"|format(recommendation.scheme.minimum_balance_required) }}</p>
-                <p><strong>Recommended By:</strong> {{ recommendation.pro.name }}</p>
-                <p><strong>Date:</strong> {{ recommendation.assigned_date.strftime("%d-%m-%Y") }}</p>
-                <p><strong>Status:</strong> <span class="badge bg-secondary">Pending</span></p>
-
-                <form method="POST" action="{{ url_for('accept_scheme', user_scheme_id=recommendation.user_scheme_id) }}" class="d-inline">
-                    <button type="submit" class="btn btn-success">Accept</button>
-                </form>
-
-                <form method="POST" action="{{ url_for('reject_scheme', user_scheme_id=recommendation.user_scheme_id) }}" class="d-inline">
-                    <button type="submit" class="btn btn-danger">Reject</button>
-                </form>
-
+                        <div class="d-flex gap-2">
+                            <form method="POST" action="{{ url_for('accept_scheme', user_scheme_id=recommendation.user_scheme_id) }}" class="flex-grow-1">
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="bi bi-check-circle me-1"></i> Accept Scheme
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ url_for('reject_scheme', user_scheme_id=recommendation.user_scheme_id) }}" class="flex-grow-1">
+                                <button type="submit" class="btn btn-outline-danger w-100">
+                                    <i class="bi bi-x-circle me-1"></i> Decline
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
-
+            {% endfor %}
         </div>
-
-        {% endfor %}
-
     {% else %}
-
-    <div class="alert alert-info mt-3">
-        No pending recommendations.
-    </div>
-
+        <div class="dashboard-card">
+            <div class="empty-state">
+                <i class="bi bi-inbox empty-state-icon"></i>
+                <h5 class="fw-bold text-dark mb-1">No Pending Recommendations</h5>
+                <p class="text-muted small mb-0">You have no unreviewed scheme recommendations at this time.</p>
+            </div>
+        </div>
     {% endif %}
+</div>
 
-    <hr class="mt-4">
-
-    <h4>Scheme History</h4>
-
+<!-- Scheme History -->
+<div>
+    <div class="section-label">Scheme History</div>
     {% if history %}
-
-        {% for recommendation in history %}
-
-        <div class="card mt-3">
-
-            <div class="card-body">
-
-                <h5>{{ recommendation.scheme.scheme_name }}</h5>
-
-                <p><strong>Description:</strong> {{ recommendation.scheme.description }}</p>
-                <p><strong>Interest Rate:</strong> {{ recommendation.scheme.interest_rate }}%</p>
-                <p><strong>Minimum Balance:</strong> ₹{{ "%.2f"|format(recommendation.scheme.minimum_balance_required) }}</p>
-                <p><strong>Recommended By:</strong> {{ recommendation.pro.name }}</p>
-                <p><strong>Date:</strong> {{ recommendation.assigned_date.strftime("%d-%m-%Y") }}</p>
-
-                <p>
-                    <strong>Status:</strong>
-
-                    {% if recommendation.status == "Replaced" %}
-                    <span class="badge bg-warning text-dark">Replaced</span>
-                    {% elif recommendation.status == "Rejected" %}
-                    <span class="badge bg-danger">Rejected</span>
-                    {% endif %}
-
-                </p>
-
+        <div class="dashboard-card">
+            <div class="dashboard-card-body p-0">
+                <div class="table-responsive">
+                    <table class="banking-table">
+                        <thead>
+                            <tr>
+                                <th>Scheme Name</th>
+                                <th>Interest Rate</th>
+                                <th>Min. Balance</th>
+                                <th>PRO</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for recommendation in history %}
+                            <tr>
+                                <td><strong class="text-dark">{{ recommendation.scheme.scheme_name }}</strong></td>
+                                <td class="text-success font-semibold">{{ recommendation.scheme.interest_rate }}%</td>
+                                <td>₹{{ "{:,.0f}".format(recommendation.scheme.minimum_balance_required) }}</td>
+                                <td>{{ recommendation.pro.name }}</td>
+                                <td class="text-muted small">{{ recommendation.assigned_date.strftime("%d %b %Y") }}</td>
+                                <td>
+                                    {% if recommendation.status == "Replaced" %}
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Replaced</span>
+                                    {% elif recommendation.status == "Rejected" %}
+                                        <span class="badge bg-secondary-subtle text-secondary">Rejected</span>
+                                    {% else %}
+                                        <span class="badge bg-light text-secondary border">{{ recommendation.status }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-
         </div>
-
-        {% endfor %}
-
     {% else %}
-
-    <div class="alert alert-info mt-3">
-        No scheme history yet.
-    </div>
-
+        <div class="dashboard-card">
+            <div class="empty-state">
+                <i class="bi bi-journal-x empty-state-icon"></i>
+                <h5 class="fw-bold text-dark mb-1">No Scheme History</h5>
+                <p class="text-muted small mb-0">No past scheme assignments recorded.</p>
+            </div>
+        </div>
     {% endif %}
-
 </div>
 
 {% endblock %}

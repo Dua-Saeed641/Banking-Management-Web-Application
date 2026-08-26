@@ -2,94 +2,94 @@
 
 {% block content %}
 
-<div class="container mt-5">
-
-    <h2>Manage PROs</h2>
-
-    {% if pros %}
-
-    <table class="table table-bordered table-striped mt-4">
-
-        <thead>
-            <tr>
-                <th>PRO ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Employee Code</th>
-                <th>Experience</th>
-                <th>Approval</th>
-                <th>Status</th>
-                <th>Customers</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-
-        <tbody>
-
-            {% for pro in pros %}
-
-            <tr>
-
-                <td>{{ pro.pro_id }}</td>
-                <td>{{ pro.name }}</td>
-                <td>{{ pro.email }}</td>
-                <td>{{ pro.employee_code or "Not Assigned" }}</td>
-                <td>{{ pro.experience }} years</td>
-
-                <td>
-                    {% if pro.is_approved %}
-                        Approved
-                    {% else %}
-                        Pending
-                    {% endif %}
-                </td>
-
-                <td>
-                    {% if pro.is_blacklisted %}
-                        Blacklisted
-                    {% elif pro.is_active %}
-                        Active
-                    {% else %}
-                        Inactive
-                    {% endif %}
-                </td>
-
-                <td>{{ pro.customers|length }}</td>
-
-                <td>
-                    <a href="{{ url_for('admin_pro_detail', pro_id=pro.pro_id) }}" class="btn btn-info btn-sm">Details</a>
-
-                    <a href="{{ url_for('admin_pro_customers', pro_id=pro.pro_id) }}" class="btn btn-primary btn-sm">Customers</a>
-
-                    <form method="POST" action="{{ url_for('toggle_pro_blacklist', pro_id=pro.pro_id) }}" class="d-inline">
-
-                        {% if pro.is_blacklisted %}
-                            <button type="submit" class="btn btn-success btn-sm">Unblacklist</button>
-                        {% else %}
-                            <button type="submit" class="btn btn-danger btn-sm">Blacklist</button>
-                        {% endif %}
-
-                    </form>
-                </td>
-
-            </tr>
-
-            {% endfor %}
-
-        </tbody>
-
-    </table>
-
-    {% else %}
-
-    <div class="alert alert-info mt-4">
-        No PROs found.
+<div class="page-header">
+    <div>
+        <h2 class="page-title">Manage Banking PROs</h2>
+        <p class="page-subtitle">Governance overview of professional relationship managers.</p>
     </div>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary btn-sm">
+        Back to Overview
+    </a>
+</div>
 
-    {% endif %}
-
-    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
-
+<div class="dashboard-card">
+    <div class="dashboard-card-header">
+        <h3 class="dashboard-card-title">
+            <i class="bi bi-briefcase-fill text-primary"></i> Professional Roster
+        </h3>
+    </div>
+    <div class="dashboard-card-body p-0">
+        {% if pros %}
+        <div class="table-responsive">
+            <table class="banking-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Employee Code</th>
+                        <th>Experience</th>
+                        <th>Approval</th>
+                        <th>Status</th>
+                        <th>Customers</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pro in pros %}
+                    <tr>
+                        <td class="text-muted font-monospace">#{{ pro.pro_id }}</td>
+                        <td><strong class="text-dark">{{ pro.name }}</strong></td>
+                        <td class="text-secondary small">{{ pro.email }}</td>
+                        <td class="txn-ref">{{ pro.employee_code or "Unassigned" }}</td>
+                        <td>{{ pro.experience }} yrs</td>
+                        <td>
+                            {% if pro.is_approved %}
+                                <span class="badge bg-success-subtle text-success border border-success-subtle">Approved</span>
+                            {% else %}
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if pro.is_blacklisted %}
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Blacklisted</span>
+                            {% elif pro.is_active %}
+                                <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border font-semibold">{{ pro.customers|length }}</span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-1">
+                                <a href="{{ url_for('admin_pro_detail', pro_id=pro.pro_id) }}" class="btn btn-sm btn-outline-primary text-nowrap">Details</a>
+                                <a href="{{ url_for('edit_pro_by_admin', pro_id=pro.pro_id) }}" class="btn btn-sm btn-outline-primary text-nowrap">Edit</a>
+                                <a href="{{ url_for('admin_pro_customers', pro_id=pro.pro_id) }}" class="btn btn-sm btn-outline-secondary text-nowrap">Customers</a>
+                                <form method="POST" action="{{ url_for('toggle_pro_blacklist', pro_id=pro.pro_id) }}" class="d-inline">
+                                    {% if pro.is_blacklisted %}
+                                        <button type="submit" class="btn btn-sm btn-outline-success text-nowrap">Unblacklist</button>
+                                    {% else %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger text-nowrap">Blacklist</button>
+                                    {% endif %}
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-briefcase empty-state-icon"></i>
+            <h5 class="fw-bold text-dark mb-1">No PRO Accounts Found</h5>
+            <p class="text-muted small mb-0">No professional relationship managers registered yet.</p>
+        </div>
+        {% endif %}
+    </div>
 </div>
 
 {% endblock %}
+

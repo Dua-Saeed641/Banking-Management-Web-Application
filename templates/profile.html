@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="mb-4">
+    <h2 class="fw-bold text-dark fs-3 mb-1">My Profile</h2>
+    <p class="text-secondary small mb-0">View and manage your account credentials and banking profile.</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="dashboard-card p-4 text-center">
+            <div class="avatar-circle mx-auto mb-3" style="width: 64px; height: 64px; font-size: 1.8rem; background: var(--primary);">
+                {% if current_user.role == 'admin' %}
+                    {{ admin.admin_name[0] }}
+                {% elif current_user.role == 'pro' %}
+                    {{ pro.name[0] }}
+                {% else %}
+                    {{ user.name[0] }}
+                {% endif %}
+            </div>
+            <h4 class="fw-bold text-dark fs-5 mb-1">
+                {% if current_user.role == 'admin' %}
+                    {{ admin.admin_name }}
+                {% elif current_user.role == 'pro' %}
+                    {{ pro.name }}
+                {% else %}
+                    {{ user.name }}
+                {% endif %}
+            </h4>
+            <p class="text-secondary extra-small mb-2">
+                {% if current_user.role == 'admin' %}
+                    System Administrator
+                {% elif current_user.role == 'pro' %}
+                    Banking Professional
+                {% else %}
+                    Customer Account
+                {% endif %}
+            </p>
+            {% if current_user.is_active %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1.5 rounded-pill small font-semibold mb-3">
+                    &bull; Active
+                </span>
+            {% else %}
+                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-3 py-1.5 rounded-pill small font-semibold mb-3">
+                    &bull; Offline
+                </span>
+            {% endif %}
+            <div class="text-secondary extra-small border-top pt-3">
+                {% if current_user.role == 'admin' %}
+                    {{ admin.admin_email }}
+                {% elif current_user.role == 'pro' %}
+                    {{ pro.email }}
+                {% else %}
+                    {{ user.email }}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="dashboard-card p-4">
+            <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">Account Overview</h5>
+
+            {% if current_user.role == 'user' %}
+                <div class="row g-3 small">
+                    <div class="col-sm-6">
+                        <span class="text-muted d-block extra-small">Full Name</span>
+                        <strong class="text-dark">{{ user.name }}</strong>
+                    </div>
+                    <div class="col-sm-6">
+                        <span class="text-muted d-block extra-small">Email Address</span>
+                        <strong class="text-dark">{{ user.email }}</strong>
+                    </div>
+                    <div class="col-sm-6">
+                        <span class="text-muted d-block extra-small">Account Number</span>
+                        <strong class="font-monospace text-dark">{{ account.account_number }}</strong>
+                    </div>
+                    <div class="col-sm-6">
+                        <span class="text-muted d-block extra-small">IFSC Code</span>
+                        <strong class="font-monospace text-dark">{{ account.ifsc_code }}</strong>
+                    </div>
+                    <div class="col-sm-6">
+                        <span class="text-muted d-block extra-small">Account Status</span>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle">{{ account.status }}</span>
+                    </div>
+                    <div class="col-sm-6">
+                        <span class="text-muted d-block extra-small">Assigned Relationship Manager</span>
+                        <strong class="text-dark">{{ pro.name if pro else 'Unassigned' }}</strong>
+                    </div>
+                </div>
+            {% elif current_user.role == 'pro' %}
+                <div class="row g-3 small">
+                    <div class="col-sm-6">
+                        <span class="text-muted d-block extra-small">Full Name</span>
+                        <strong class="text-dark">{{ pro.name }}</strong>
+                    </div>
+                    <div class="col-sm-6">
+                        <span class="text-muted d-block extra-small">Email Address</span>
+                        <strong class="text-dark">{{ pro.email }}</strong>
+                    </div>
+                    <div class="col-sm-6">
+                        <span class="text-muted d-block extra-small">Employee Code</span>
+                        <strong class="font-monospace text-dark">{{ pro.employee_code }}</strong>
+                    </div>
+                    <div class="col-sm-6">
+                        <span class="text-muted d-block extra-small">Assigned Customers</span>
+                        <strong class="text-dark">{{ assigned_customers_count }} Customer(s)</strong>
+                    </div>
+                    <div class="col-sm-6">
+                        <span class="text-muted d-block extra-small">Approval Status</span>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle">{{ pro.status }}</span>
+                    </div>
+                </div>
+            {% else %}
+                <div class="row g-3 small">
+                    <div class="col-sm-6">
+                        <span class="text-muted d-block extra-small">Administrator Name</span>
+                        <strong class="text-dark">{{ admin.admin_name }}</strong>
+                    </div>
+                    <div class="col-sm-6">
+                        <span class="text-muted d-block extra-small">Admin Email</span>
+                        <strong class="text-dark">{{ admin.admin_email }}</strong>
+                    </div>
+                    <div class="col-sm-6">
+                        <span class="text-muted d-block extra-small">Role Privilege</span>
+                        <span class="badge bg-dark text-white">System Administrator</span>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

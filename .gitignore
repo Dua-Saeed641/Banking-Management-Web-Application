@@ -3,16 +3,23 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Database files & local test DBs
-*.sqlite3
-*.db
-tests/test_database.db
-db_directory/*.sqlite3
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
 
 # Virtual environments
 venv/
+.venv/
 env/
 ENV/
+
+# Database files & local test DBs
+*.sqlite3
+*.db
+instance/
+tests/test_database.db
+db_directory/*.sqlite3
 
 # IDE & OS metadata
 .DS_Store

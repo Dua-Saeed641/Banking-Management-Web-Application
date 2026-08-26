@@ -14,9 +14,11 @@ class Admin(UserMixin, db.Model):
     is_active=db.Column(db.Boolean, default=True)
     def get_id(self):
         return f"admin-{self.admin_id}"
+    @property
+    def role(self):
+        return "admin"
 
 class User(UserMixin, db.Model):
-
     __tablename__ = "users"
     user_id = db.Column(db.Integer,primary_key=True,autoincrement=True)
     name = db.Column(db.String(100),nullable=False)
@@ -28,6 +30,9 @@ class User(UserMixin, db.Model):
     assigned_pro = db.relationship("PRO",backref="customers",foreign_keys=[assigned_pro_id])
     def get_id(self):
         return f"user-{self.user_id}"
+    @property
+    def role(self):
+        return "user"
 
     bank_account = db.relationship("BankAccount",backref="user",uselist=False)
     scheme_assignments = db.relationship("UserScheme",backref="user",lazy=True)
@@ -48,6 +53,9 @@ class PRO(UserMixin, db.Model):
     is_active = db.Column(db.Boolean,default=True)
     def get_id(self):
         return f"pro-{self.pro_id}"
+    @property
+    def role(self):
+        return "pro"
 
     recommended_schemes = db.relationship("UserScheme",backref="pro",foreign_keys="UserScheme.assigned_by_pro")
 

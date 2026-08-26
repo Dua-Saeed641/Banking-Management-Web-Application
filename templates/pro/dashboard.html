@@ -2,64 +2,174 @@
 
 {% block content %}
 
-<div class="container mt-5">
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <div>
+        <h2 class="fw-bold text-dark fs-3 mb-1">Welcome back, {{ pro.name }}</h2>
+        <p class="text-secondary small mb-0">Employee Code: <strong>{{ pro.employee_code }}</strong> &bull; Workspace Overview</p>
+    </div>
+    <a href="{{ url_for('pro_customers') }}" class="btn btn-outline-secondary btn-sm">
+        Customer Roster
+    </a>
+</div>
 
-    <h2>PRO Dashboard</h2>
-
-    <div class="row mt-4">
-
-        <div class="col-md-3 mb-3">
-            <div class="card shadow-sm stat-card">
-                <div class="card-body">
-                    <h5>Assigned Customers</h5>
-                    <h3>{{ assigned_customers }}</h3>
-                </div>
+<!-- Compact Summary Metric Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+        <div class="summary-metric-card">
+            <div>
+                <div class="metric-label">Assigned Customers</div>
+                <div class="metric-value">{{ assigned_customers }}</div>
+                <div class="metric-subtext">Active accounts</div>
             </div>
         </div>
-
-        <div class="col-md-3 mb-3">
-            <div class="card shadow-sm stat-card">
-                <div class="card-body">
-                    <h5>Pending</h5>
-                    <h3>{{ pending_recommendations }}</h3>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3 mb-3">
-            <div class="card shadow-sm stat-card">
-                <div class="card-body">
-                    <h5>Accepted</h5>
-                    <h3>{{ accepted_recommendations }}</h3>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3 mb-3">
-            <div class="card shadow-sm stat-card">
-                <div class="card-body">
-                    <h5>Rejected</h5>
-                    <h3>{{ rejected_recommendations }}</h3>
-                </div>
-            </div>
-        </div>
-
     </div>
 
-    <hr class="my-4">
-
-    <p><strong>Employee Code:</strong> {{ pro.employee_code }}</p>
-    <p><strong>Email:</strong> {{ pro.email }}</p>
-    <p><strong>Contact Number:</strong> {{ pro.contact_number }}</p>
-    <p><strong>Experience:</strong> {{ pro.experience }} years</p>
-
-    <hr class="my-4">
-
-    <div class="d-flex flex-wrap gap-2">
-        <a href="{{ url_for('pro_customers') }}" class="btn btn-primary">My Customers</a>
-        <a href="{{ url_for('pro_recommendations') }}" class="btn btn-primary">My Recommendations</a>
+    <div class="col-md-3 col-6">
+        <div class="summary-metric-card">
+            <div>
+                <div class="metric-label">Pending Schemes</div>
+                <div class="metric-value text-warning-emphasis">{{ pending_recommendations }}</div>
+                <div class="metric-subtext">Awaiting customer review</div>
+            </div>
+        </div>
     </div>
 
+    <div class="col-md-3 col-6">
+        <div class="summary-metric-card">
+            <div>
+                <div class="metric-label">Accepted Schemes</div>
+                <div class="metric-value text-success">{{ accepted_recommendations }}</div>
+                <div class="metric-subtext">Active customer schemes</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-6">
+        <div class="summary-metric-card">
+            <div>
+                <div class="metric-label">Rejected Schemes</div>
+                <div class="metric-value text-secondary">{{ rejected_recommendations }}</div>
+                <div class="metric-subtext">Declined by customer</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Left Column: Customer Roster Preview -->
+    <div class="col-lg-7">
+        <div class="dashboard-card">
+            <div class="dashboard-card-header">
+                <h3 class="dashboard-card-title">My Assigned Customers</h3>
+                <a href="{{ url_for('pro_customers') }}" class="card-header-link">View All</a>
+            </div>
+            <div class="dashboard-card-body p-0">
+                {% if recent_customers %}
+                <div class="table-responsive">
+                    <table class="banking-table">
+                        <thead>
+                            <tr>
+                                <th>Customer Name</th>
+                                <th>Account Number</th>
+                                <th class="text-end">Balance</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for customer in recent_customers %}
+                            <tr>
+                                <td>
+                                    <strong class="text-dark d-block">{{ customer.name }}</strong>
+                                    <span class="text-muted small">{{ customer.email }}</span>
+                                </td>
+                                <td class="txn-ref">
+                                    {% if customer.bank_account %}
+                                        {{ customer.bank_account.account_number }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    {% if customer.bank_account %}
+                                        <strong>₹{{ "{:,.2f}".format(customer.bank_account.balance) }}</strong>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if customer.bank_account and customer.bank_account.status == 'Active' %}
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary-subtle text-secondary">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('pro_customer_details', user_id=customer.user_id) }}" class="btn btn-sm btn-outline-secondary py-0 fs-7">View</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <p class="text-muted small mb-0">No assigned customer bank accounts yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Recent Recommendations Preview -->
+    <div class="col-lg-5">
+        <div class="dashboard-card">
+            <div class="dashboard-card-header">
+                <h3 class="dashboard-card-title">Recent Scheme Recommendations</h3>
+                <a href="{{ url_for('pro_recommendations') }}" class="card-header-link">View All</a>
+            </div>
+            <div class="dashboard-card-body p-0">
+                {% if recent_recommendations %}
+                <div class="table-responsive">
+                    <table class="banking-table">
+                        <thead>
+                            <tr>
+                                <th>Scheme & Customer</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rec in recent_recommendations %}
+                            <tr>
+                                <td>
+                                    <strong class="text-dark d-block">{{ rec.scheme.scheme_name }}</strong>
+                                    <span class="text-muted small">Customer: {{ rec.user.name }}</span>
+                                </td>
+                                <td>
+                                    {% if rec.status == 'Accepted' %}
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle">Accepted</span>
+                                    {% elif rec.status == 'Pending' %}
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Pending</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary-subtle text-secondary">Rejected</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <p class="text-muted small mb-0">No scheme recommendations submitted yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 </div>
 
 {% endblock %}
+
+

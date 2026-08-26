@@ -2,66 +2,70 @@
 
 {% block content %}
 
-<div class="container mt-5">
-
-    <h2>My Recommendations</h2>
-
-    {% if recommendations %}
-
-    <table class="table table-bordered table-striped mt-4">
-
-        <thead>
-            <tr>
-                <th>Customer</th>
-                <th>Email</th>
-                <th>Scheme</th>
-                <th>Interest Rate</th>
-                <th>Minimum Balance</th>
-                <th>Date</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-
-        <tbody>
-
-            {% for recommendation in recommendations %}
-
-            <tr>
-                <td>{{ recommendation.user.name }}</td>
-                <td>{{ recommendation.user.email }}</td>
-                <td>{{ recommendation.scheme.scheme_name }}</td>
-                <td>{{ recommendation.scheme.interest_rate }}%</td>
-                <td>₹{{ "%.2f"|format(recommendation.scheme.minimum_balance_required) }}</td>
-                <td>{{ recommendation.assigned_date.strftime("%d-%m-%Y") }}</td>
-                <td>
-                    {% if recommendation.status == "Accepted" %}
-                    <span class="badge bg-success">Accepted</span>
-                    {% elif recommendation.status == "Replaced" %}
-                    <span class="badge bg-warning text-dark">Replaced</span>
-                    {% elif recommendation.status == "Rejected" %}
-                    <span class="badge bg-danger">Rejected</span>
-                    {% else %}
-                    <span class="badge bg-secondary">{{ recommendation.status }}</span>
-                    {% endif %}
-                </td>
-            </tr>
-
-            {% endfor %}
-
-        </tbody>
-
-    </table>
-
-    {% else %}
-
-    <div class="alert alert-info mt-4">
-        You have not recommended any schemes yet.
+<div class="page-header">
+    <div>
+        <h2 class="page-title">My Recommendations</h2>
+        <p class="page-subtitle">Track scheme recommendations offered to your assigned customers.</p>
     </div>
+    <a href="{{ url_for('pro_dashboard') }}" class="btn btn-outline-secondary btn-sm">
+        Back to Dashboard
+    </a>
+</div>
 
-    {% endif %}
-
-    <a href="{{ url_for('pro_dashboard') }}" class="btn btn-secondary mt-3">← Back to Dashboard</a>
-
+<div class="dashboard-card">
+    <div class="dashboard-card-header">
+        <h3 class="dashboard-card-title">
+            <i class="bi bi-star-fill text-warning"></i> Recommendation Tracking Ledger
+        </h3>
+    </div>
+    <div class="dashboard-card-body p-0">
+        {% if recommendations %}
+        <div class="table-responsive">
+            <table class="banking-table">
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Email Address</th>
+                        <th>Recommended Scheme</th>
+                        <th>Interest Rate</th>
+                        <th>Min. Balance</th>
+                        <th>Date Sent</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for recommendation in recommendations %}
+                    <tr>
+                        <td><strong class="text-dark">{{ recommendation.user.name }}</strong></td>
+                        <td class="text-secondary small">{{ recommendation.user.email }}</td>
+                        <td><strong class="text-dark">{{ recommendation.scheme.scheme_name }}</strong></td>
+                        <td class="text-success font-semibold">{{ recommendation.scheme.interest_rate }}%</td>
+                        <td>₹{{ "{:,.0f}".format(recommendation.scheme.minimum_balance_required) }}</td>
+                        <td class="text-muted small">{{ recommendation.assigned_date.strftime("%d %b %Y") }}</td>
+                        <td>
+                            {% if recommendation.status == "Accepted" %}
+                                <span class="badge bg-success-subtle text-success border border-success-subtle">Accepted</span>
+                            {% elif recommendation.status == "Replaced" %}
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Replaced</span>
+                            {% elif recommendation.status == "Rejected" %}
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Rejected</span>
+                            {% else %}
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Pending Response</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-card-checklist empty-state-icon"></i>
+            <h5 class="fw-bold text-dark mb-1">No Recommendations Sent</h5>
+            <p class="text-muted small mb-0">You have not offered any scheme recommendations to customers yet.</p>
+        </div>
+        {% endif %}
+    </div>
 </div>
 
 {% endblock %}

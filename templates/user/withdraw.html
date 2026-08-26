@@ -2,74 +2,70 @@
 
 {% block content %}
 
-<div class="container mt-5">
+<div class="page-header">
+    <div>
+        <h2 class="page-title">Withdraw Money</h2>
+        <p class="page-subtitle">Withdraw funds while maintaining your account minimum balance requirement.</p>
+    </div>
+</div>
 
-    <div class="card shadow">
+<div class="form-card">
 
-        <div class="card-body">
-
-            <h2>Withdraw Money</h2>
-
-            <hr>
-
-            <p>
-                <strong>Current Balance:</strong>
-                ₹{{ "%.2f"|format(account.balance) }}
-            </p>
-
-            <p>
-                <strong>Minimum Balance Required:</strong>
-                ₹{{ "%.2f"|format(effective_minimum) }}
+    <div class="row g-3 mb-4">
+        <div class="col-6">
+            <div class="p-3 bg-light rounded-3 border">
+                <span class="text-muted small d-block mb-1">Current Balance</span>
+                <strong class="fs-5 text-dark">₹{{ "{:,.2f}".format(account.balance) }}</strong>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="p-3 bg-light rounded-3 border">
+                <span class="text-muted small d-block mb-1">Minimum Balance Required</span>
+                <strong class="fs-5 text-secondary">₹{{ "{:,.2f}".format(effective_minimum) }}</strong>
                 {% if account.scheme and account.scheme.status == "Active" %}
-                    <span class="badge bg-info text-dark ms-1">{{ account.scheme.scheme_name }}</span>
+                    <span class="badge bg-info-subtle text-info border border-info-subtle d-inline-block mt-1">{{ account.scheme.scheme_name }}</span>
                 {% else %}
-                    <span class="badge bg-secondary ms-1">Account Default</span>
+                    <span class="badge bg-secondary-subtle text-secondary d-inline-block mt-1">Default Scheme</span>
                 {% endif %}
-            </p>
+            </div>
+        </div>
+    </div>
 
-            {% if withdraw_error %}
-                <div class="alert alert-danger">
-                    {{ withdraw_error }}
-                </div>
-            {% endif %}
+    {% if withdraw_error %}
+        <div class="alert alert-danger mb-4">
+            <i class="bi bi-exclamation-circle me-1"></i> {{ withdraw_error }}
+        </div>
+    {% endif %}
 
-            <form method="POST">
-
-                <div class="mb-3">
-
-                    <label class="form-label">
-                        Withdrawal Amount
-                    </label>
-
-                    <input
-                        type="number"
-                        name="amount"
-                        class="form-control"
-                        min="1"
-                        step="0.01"
-                        required
-                    >
-
-                </div>
-
-                <button
-                    type="submit"
-                    class="btn btn-danger">
-                    Withdraw
-                </button>
-
-                <a
-                    href="{{ url_for('user_dashboard') }}"
-                    class="btn btn-secondary">
-                    Cancel
-                </a>
-
-            </form>
-
+    <form method="POST">
+        <div class="mb-4">
+            <label class="form-label fw-semibold text-dark">
+                Withdrawal Amount (₹)
+            </label>
+            <div class="input-group">
+                <span class="input-group-text bg-white text-muted">₹</span>
+                <input
+                    type="number"
+                    name="amount"
+                    class="form-control form-control-lg fs-6"
+                    placeholder="Enter amount (e.g. 2000)"
+                    min="1"
+                    step="0.01"
+                    required
+                >
+            </div>
         </div>
 
-    </div>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-danger">
+                <i class="bi bi-arrow-down-circle me-1"></i> Withdraw Funds
+            </button>
+            <a href="{{ url_for('user_dashboard') }}" class="btn btn-outline-secondary">
+                Cancel
+            </a>
+        </div>
+    </form>
 
 </div>
 
-{% endblock %}
+{% endblock %}

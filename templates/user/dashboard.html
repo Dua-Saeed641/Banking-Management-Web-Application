@@ -2,129 +2,144 @@
 
 {% block content %}
 
-<div class="container mt-5">
-
-    <h2>Welcome, {{ user.name }}</h2>
-
-    <div class="row mt-4">
-
-        <div class="col-md-3 mb-3">
-            <div class="card shadow-sm stat-card">
-                <div class="card-body">
-                    <h5>Current Balance</h5>
-                    <h3>₹{{ "%.2f"|format(account.balance) }}</h3>
-                    <p class="mb-0">
-                        {% if account.status == "Active" %}
-                        <span class="badge bg-success">Active</span>
-                        {% elif account.status == "Frozen" %}
-                        <span class="badge bg-warning text-dark">Frozen</span>
-                        {% else %}
-                        <span class="badge bg-danger">{{ account.status }}</span>
-                        {% endif %}
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3 mb-3">
-            <div class="card shadow-sm stat-card">
-                <div class="card-body">
-                    <h5>Active Scheme</h5>
-                    {% if account.scheme %}
-                    <h3 class="fs-6 mt-2">{{ account.scheme.scheme_name }}</h3>
-                    <p class="mb-0">Interest: {{ account.scheme.interest_rate }}%</p>
-                    {% else %}
-                    <p class="text-muted mt-2 mb-0">No scheme active</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3 mb-3">
-            <div class="card shadow-sm stat-card">
-                <div class="card-body">
-                    <h5>Pending Recommendations</h5>
-                    <h3>{{ pending_recommendations }}</h3>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3 mb-3">
-            <div class="card shadow-sm stat-card">
-                <div class="card-body">
-                    <h5>Assigned PRO</h5>
-                    {% if user.assigned_pro %}
-                    <p class="mt-2 mb-0">{{ user.assigned_pro.name }}</p>
-                    <p class="mb-0 text-muted">{{ user.assigned_pro.employee_code }}</p>
-                    {% else %}
-                    <p class="text-muted mt-2 mb-0">Not assigned</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <hr class="my-4">
-
-    <h5>Account Details</h5>
-    <p><strong>Account Number:</strong> {{ account.account_number }}</p>
-    <p><strong>Account Type:</strong> {{ account.account_type }}</p>
-    <p><strong>IFSC Code:</strong> {{ account.ifsc_code }}</p>
-    <p><strong>Minimum Balance:</strong> ₹{{ "%.2f"|format(account.minimum_balance) }}</p>
-
-    <hr class="my-4">
-
-    <h5>Recent Transactions</h5>
-
-    {% if recent_transactions %}
-
-    <table class="table table-bordered table-sm mt-3">
-        <thead>
-            <tr>
-                <th>Reference</th>
-                <th>Type</th>
-                <th>Amount</th>
-                <th>Balance After</th>
-                <th>Date</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for transaction in recent_transactions %}
-            <tr>
-                <td>TXN-{{ "%05d"|format(transaction.transaction_id) }}</td>
-                <td>
-                    {% if transaction.transaction_type == "Deposit" %}
-                    <span class="badge bg-success">Deposit</span>
-                    {% elif transaction.transaction_type == "Withdrawal" %}
-                    <span class="badge bg-danger">Withdrawal</span>
-                    {% else %}
-                    <span class="badge bg-secondary">{{ transaction.transaction_type }}</span>
-                    {% endif %}
-                </td>
-                <td>₹{{ "%.2f"|format(transaction.amount) }}</td>
-                <td>₹{{ "%.2f"|format(transaction.balance_after_transaction) }}</td>
-                <td>{{ transaction.transaction_date.strftime("%d-%m-%Y %H:%M") }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    {% else %}
-
-    <p class="text-muted">No transactions yet.</p>
-
-    {% endif %}
-
-    <hr class="my-4">
-
-    <div class="d-flex flex-wrap gap-2">
-        <a href="{{ url_for('deposit') }}" class="btn btn-primary">Deposit</a>
-        <a href="{{ url_for('user_withdraw') }}" class="btn btn-primary">Withdraw</a>
-        <a href="{{ url_for('transaction_history') }}" class="btn btn-primary">All Transactions</a>
-        <a href="{{ url_for('user_schemes') }}" class="btn btn-primary">My Schemes</a>
-    </div>
-
+<!-- Page Header -->
+<div class="mb-4">
+    <h2 class="fw-bold text-dark fs-2 mb-1">Welcome back, {{ user.name }}</h2>
+    <p class="text-secondary small mb-0">Account Overview &amp; NetBanking Workspace</p>
 </div>
 
+<!-- Metrics Row (Matching Screenshot Columns) -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="text-secondary small font-medium mb-1">Available Balance</div>
+        <div class="fs-2 fw-bold text-dark" style="letter-spacing: -0.02em;">₹{{ "{:,.2f}".format(account.balance) }}</div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="text-secondary small font-medium mb-1">Account Details</div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="font-monospace fw-bold text-dark">#{{ account.account_number[-4:] if account.account_number|length >= 12 else account.account_number }}</span>
+            {% if account.status == "Active" %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-0.5 small">&bull; Active</span>
+            {% else %}
+                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-0.5 small">{{ account.status }}</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="text-secondary small font-medium mb-1">Active Banking Scheme</div>
+        <div class="text-dark font-medium">
+            {% if account.scheme %}
+                <strong class="text-dark">{{ account.scheme.scheme_name }}</strong> <span class="text-success small">({{ account.scheme.interest_rate }}%)</span>
+            {% else %}
+                <span class="text-secondary">Default (Min. ₹{{ "{:,.0f}".format(account.minimum_balance) }})</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions Row -->
+<div class="dashboard-card mb-4 p-4">
+    <h3 class="fw-bold text-dark fs-6 mb-3">Quick Actions</h3>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('deposit') }}" class="btn btn-primary px-3 py-2 font-semibold small">
+            + Deposit Funds
+        </a>
+        <a href="{{ url_for('user_withdraw') }}" class="btn btn-outline-secondary px-3 py-2 font-semibold small">
+            &minus; Withdraw
+        </a>
+        <a href="{{ url_for('transaction_history') }}" class="btn btn-outline-secondary px-3 py-2 font-semibold small">
+            &#8645; Transaction Ledger
+        </a>
+        <a href="{{ url_for('user_schemes') }}" class="btn btn-outline-secondary px-3 py-2 font-semibold small">
+            &#9671; Banking Schemes
+        </a>
+    </div>
+</div>
+
+<!-- Pending Recommendation Notification (if any) -->
+{% if pending_recommendations > 0 %}
+<div class="dashboard-card mb-4 border-warning-subtle">
+    <div class="dashboard-card-header bg-warning-subtle py-2">
+        <h3 class="dashboard-card-title text-warning-emphasis fs-6 mb-0">
+            <i class="bi bi-exclamation-circle-fill me-1"></i> Pending Recommendations
+        </h3>
+    </div>
+    <div class="dashboard-card-body d-flex align-items-center justify-content-between py-3">
+        <span class="text-dark font-medium">Your assigned Banking PRO has recommended new schemes for your account.</span>
+        <a href="{{ url_for('user_schemes') }}" class="btn btn-warning btn-sm text-dark font-semibold">
+            Review Recommendations
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Transactions Ledger Table -->
+<div class="dashboard-card mb-4">
+    <div class="dashboard-card-header d-flex align-items-center justify-content-between">
+        <h3 class="dashboard-card-title fs-6 mb-0">Recent Transactions</h3>
+        <a href="{{ url_for('transaction_history') }}" class="card-header-link text-primary font-semibold small text-decoration-none">View All</a>
+    </div>
+    <div class="dashboard-card-body p-0">
+        {% if recent_transactions %}
+        <div class="table-responsive">
+            <table class="banking-table">
+                <thead>
+                    <tr>
+                        <th class="text-uppercase extra-small text-muted fw-bold">REFERENCE</th>
+                        <th class="text-uppercase extra-small text-muted fw-bold">TYPE</th>
+                        <th class="text-uppercase extra-small text-muted fw-bold text-end">AMOUNT</th>
+                        <th class="text-uppercase extra-small text-muted fw-bold text-end">BALANCE AFTER</th>
+                        <th class="text-uppercase extra-small text-muted fw-bold">DATE &amp; TIME</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transaction in recent_transactions %}
+                    <tr>
+                        <td class="font-monospace fw-bold text-dark">TXN-{{ "%05d"|format(transaction.transaction_id) }}</td>
+                        <td>
+                            {% if transaction.transaction_type == "Deposit" %}
+                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Deposit</span>
+                            {% elif transaction.transaction_type == "Withdrawal" %}
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">Withdrawal</span>
+                            {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary px-2 py-1">{{ transaction.transaction_type }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end font-semibold">
+                            {% if transaction.transaction_type == "Deposit" %}
+                                <span class="text-success">+ ₹{{ "{:,.2f}".format(transaction.amount) }}</span>
+                            {% else %}
+                                <span class="text-danger">&minus; ₹{{ "{:,.2f}".format(transaction.amount) }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end font-semibold text-dark">₹{{ "{:,.2f}".format(transaction.balance_after_transaction) }}</td>
+                        <td class="text-muted small">{{ transaction.transaction_date.strftime("%d %b %Y, %H:%M") }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state p-4">
+            <p class="text-muted small mb-0">No recent transactions recorded on this account.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Assigned PRO Footer Block -->
+{% if user.assigned_pro %}
+<div class="p-3 bg-white rounded-2 border d-flex align-items-center justify-content-between">
+    <div>
+        <span class="text-muted small d-block">Assigned Banking Officer</span>
+        <strong class="text-dark">{{ user.assigned_pro.name }}</strong>
+    </div>
+    <span class="badge bg-light text-secondary border font-monospace">{{ user.assigned_pro.employee_code }}</span>
+</div>
+{% endif %}
+
 {% endblock %}
+
+

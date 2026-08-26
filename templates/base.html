@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Banking Management System</title>
+    <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='logo.jpg') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
@@ -14,69 +15,201 @@
 
 <div class="app-wrapper">
 
+    {% if current_user.is_authenticated %}
     <aside class="sidebar">
 
         <div class="sidebar-brand">
-            <img src="{{ url_for('static', filename='logo.jpg') }}" height="28" style="border-radius:4px;" class="me-2">Banking MS
+            <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Logo" class="brand-logo-img">
+            <span>Banking MS</span>
         </div>
 
         <nav class="sidebar-nav">
 
-            {% if current_user.is_authenticated %}
+            {% if current_user.role == 'admin' %}
 
-                {% if current_user.get_id().startswith('admin') %}
+                <div class="sidebar-section">Admin</div>
+                <a href="{{ url_for('admin_dashboard') }}" class="{% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+                    <i class="bi bi-grid-1x2-fill"></i> Overview
+                </a>
+                <a href="{{ url_for('admin_users') }}" class="{% if request.endpoint == 'admin_users' %}active{% endif %}">
+                    <i class="bi bi-people-fill"></i> Users
+                </a>
+                <a href="{{ url_for('pro_requests') }}" class="{% if request.endpoint == 'pro_requests' %}active{% endif %}">
+                    <i class="bi bi-person-badge-fill"></i> PRO Requests
+                </a>
+                <a href="{{ url_for('manage_pros') }}" class="{% if request.endpoint == 'manage_pros' %}active{% endif %}">
+                    <i class="bi bi-briefcase-fill"></i> Manage PROs
+                </a>
+                <a href="{{ url_for('admin_schemes') }}" class="{% if request.endpoint == 'admin_schemes' %}active{% endif %}">
+                    <i class="bi bi-card-checklist"></i> Banking Schemes
+                </a>
 
-                    <div class="sidebar-section">Admin</div>
-                    <a href="{{ url_for('admin_dashboard') }}"> Dashboard</a>
-                    <a href="{{ url_for('admin_users') }}"> Users</a>
-                    <a href="{{ url_for('pro_requests') }}"> PRO Requests</a>
-                    <a href="{{ url_for('manage_pros') }}"> Manage PROs</a>
-                    <a href="{{ url_for('admin_schemes') }}"> Schemes</a>
+            {% elif current_user.role == 'pro' %}
 
-                {% elif current_user.get_id().startswith('pro') %}
+                <div class="sidebar-section">PRO Workspace</div>
+                <a href="{{ url_for('pro_dashboard') }}" class="{% if request.endpoint == 'pro_dashboard' %}active{% endif %}">
+                    <i class="bi bi-grid-1x2-fill"></i> Overview
+                </a>
+                <a href="{{ url_for('pro_customers') }}" class="{% if request.endpoint == 'pro_customers' %}active{% endif %}">
+                    <i class="bi bi-people-fill"></i> My Customers
+                </a>
+                <a href="{{ url_for('pro_recommendations') }}" class="{% if request.endpoint == 'pro_recommendations' %}active{% endif %}">
+                    <i class="bi bi-star-fill"></i> Recommendations
+                </a>
 
-                    <div class="sidebar-section">PRO</div>
-                    <a href="{{ url_for('pro_dashboard') }}"> Dashboard</a>
-                    <a href="{{ url_for('pro_customers') }}"> My Customers</a>
-                    <a href="{{ url_for('pro_recommendations') }}"> Recommendations</a>
+            {% else %}
 
-                {% else %}
-
-                    <div class="sidebar-section">Account</div>
-                    <a href="{{ url_for('user_dashboard') }}"> Dashboard</a>
-                    <a href="{{ url_for('deposit') }}"> Deposit</a>
-                    <a href="{{ url_for('user_withdraw') }}"> Withdraw</a>
-                    <a href="{{ url_for('transaction_history') }}"> Transactions</a>
-                    <a href="{{ url_for('user_schemes') }}"> My Schemes</a>
-
-                {% endif %}
+                <div class="sidebar-section">Banking</div>
+                <a href="{{ url_for('user_dashboard') }}" class="{% if request.endpoint == 'user_dashboard' %}active{% endif %}">
+                    <i class="bi bi-grid-1x2-fill"></i> Overview
+                </a>
+                <a href="{{ url_for('transaction_history') }}" class="{% if request.endpoint == 'transaction_history' %}active{% endif %}">
+                    <i class="bi bi-arrow-down-up"></i> Transactions
+                </a>
+                <a href="{{ url_for('user_schemes') }}" class="{% if request.endpoint == 'user_schemes' %}active{% endif %}">
+                    <i class="bi bi-shield-check"></i> Banking Schemes
+                </a>
 
             {% endif %}
 
         </nav>
 
-        {% if current_user.is_authenticated %}
+
         <div class="sidebar-footer">
-            <a href="{{ url_for('logout') }}"> Logout</a>
+            <a href="{{ url_for('logout') }}">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
         </div>
-        {% endif %}
 
     </aside>
+    {% endif %}
 
-    <main class="main-content">
+    <main class="main-content {% if not current_user.is_authenticated %}m-0{% endif %}">
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show mb-4" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        {% if current_user.is_authenticated %}
+        <header class="top-header">
+            <div class="top-header-title">
+                <h1>
+                    {% if current_user.role == 'admin' %}
+                        Administrator Portal
+                    {% elif current_user.role == 'pro' %}
+                        Relationship Manager Workspace
+                    {% else %}
+                        NetBanking
+                    {% endif %}
+                </h1>
+            </div>
+
+            <div class="top-header-actions">
+                <!-- Working Notifications Dropdown -->
+                <div class="dropdown">
+                    <button class="header-icon-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
+                        <i class="bi bi-bell"></i>
+                        <span class="icon-dot"></span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end shadow-sm border mt-2 p-0" style="width: 300px; max-width: 90vw; z-index: 1050;">
+                        <div class="p-3 border-bottom d-flex align-items-center justify-content-between bg-light rounded-top">
+                            <strong class="text-dark small">Notifications</strong>
+                            <span class="badge bg-primary-subtle text-primary extra-small">Live Alerts</span>
+                        </div>
+                        <div class="list-group list-group-flush small" style="max-height: 260px; overflow-y: auto;">
+                            {% if current_user.role == 'admin' %}
+                                <a href="{{ url_for('pro_requests') }}" class="list-group-item list-group-item-action py-2 px-3">
+                                    <div class="fw-semibold text-dark mb-0.5"><i class="bi bi-person-badge text-primary me-1"></i> PRO Requests</div>
+                                    <div class="text-muted extra-small">Review pending relationship manager applications.</div>
+                                </a>
+                                <div class="list-group-item py-2 px-3">
+                                    <div class="fw-semibold text-dark mb-0.5"><i class="bi bi-shield-check text-success me-1"></i> System Active</div>
+                                    <div class="text-muted extra-small">Platform security & databases operational.</div>
+                                </div>
+                            {% elif current_user.role == 'pro' %}
+                                <a href="{{ url_for('pro_customers') }}" class="list-group-item list-group-item-action py-2 px-3">
+                                    <div class="fw-semibold text-dark mb-0.5"><i class="bi bi-people text-primary me-1"></i> Customer Accounts</div>
+                                    <div class="text-muted extra-small">Inspect assigned accounts & recommendations.</div>
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('user_schemes') }}" class="list-group-item list-group-item-action py-2 px-3">
+                                    <div class="fw-semibold text-primary mb-0.5"><i class="bi bi-star-fill text-warning me-1"></i> Scheme Offers</div>
+                                    <div class="text-muted extra-small">Check available & recommended banking schemes.</div>
+                                </a>
+                                <div class="list-group-item py-2 px-3">
+                                    <div class="fw-semibold text-dark mb-0.5"><i class="bi bi-check-circle text-success me-1"></i> Account Active</div>
+                                    <div class="text-muted extra-small">Your NetBanking session is secure.</div>
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+                </div>
 
-        {% block content %}{% endblock %}
+                <!-- Working User Profile Dropdown -->
+                <div class="dropdown">
+                    <button class="user-profile-badge btn p-0 border-0 bg-transparent" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="d-flex align-items-center gap-2 px-2 py-1 rounded-pill bg-light border">
+                            <div class="avatar-circle">
+                                {% if current_user.name %}
+                                    {{ current_user.name[0] }}
+                                {% elif current_user.admin_name %}
+                                    {{ current_user.admin_name[0] }}
+                                {% else %}
+                                    U
+                                {% endif %}
+                            </div>
+                            <span class="user-name-text">
+                                {% if current_user.name %}
+                                    {{ current_user.name }}
+                                {% elif current_user.admin_name %}
+                                    {{ current_user.admin_name }}
+                                {% else %}
+                                    User
+                                {% endif %}
+                            </span>
+                            <i class="bi bi-chevron-down text-muted small ms-1"></i>
+                        </div>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border mt-2" style="z-index: 1050;">
+                        <li class="px-3 py-2 border-bottom">
+                            <div class="fw-bold text-dark small">
+                                {% if current_user.name %}
+                                    {{ current_user.name }}
+                                {% elif current_user.admin_name %}
+                                    {{ current_user.admin_name }}
+                                {% endif %}
+                            </div>
+                            <div class="text-muted extra-small">
+                                Role: {{ current_user.role|upper }}
+                            </div>
+                        </li>
+                        <li>
+                            <a class="dropdown-item small py-2 d-flex align-items-center gap-2" href="{{ url_for('view_profile') }}">
+                                <i class="bi bi-person text-primary"></i> My Profile
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider my-1"></li>
+                        <li>
+                            <a class="dropdown-item small py-2 d-flex align-items-center gap-2 text-danger" href="{{ url_for('logout') }}">
+                                <i class="bi bi-box-arrow-right"></i> Sign Out
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+        {% endif %}
+
+        <div class="content-body">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show mb-4" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
 
     </main>
 

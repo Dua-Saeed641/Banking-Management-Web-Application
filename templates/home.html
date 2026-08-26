@@ -4,58 +4,211 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Banking Management System</title>
+    <title>Banking Management System &bull; NetBanking Portal</title>
+    <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='logo.jpg') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
 </head>
 
-<body>
+<body style="background: #F6F4F0; color: #1C1A17;">
 
-<div class="auth-page">
-    <div style="width:100%; max-width:860px; padding:0 20px;">
+<!-- Public Bank Navigation -->
+<header class="home-nav">
+    <div class="container d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-2">
+            <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Logo" class="brand-logo-img" style="width: 32px; height: 32px;">
+            <span class="fs-5 fw-bold text-dark tracking-tight">Banking MS</span>
+        </div>
+        <div class="d-flex align-items-center gap-4">
+            <div class="d-none d-md-flex align-items-center gap-3 text-secondary small fw-medium">
+                <a href="#about" class="text-secondary text-decoration-none">About</a>
+                <a href="#services" class="text-secondary text-decoration-none">Services</a>
+                <a href="{{ url_for('login', role='PRO') }}" class="text-secondary text-decoration-none">PRO Portal</a>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a href="{{ url_for('register_user') }}" class="btn btn-outline-secondary btn-sm px-3">Open Account</a>
+                <a href="{{ url_for('login', role='User') }}" class="btn btn-primary btn-sm px-3 font-semibold">NetBanking Sign In</a>
+            </div>
+        </div>
+    </div>
+</header>
 
-        <div class="text-center mb-5">
-            <img src="{{ url_for('static', filename='logo.jpg') }}" height="56" style="border-radius:8px;" class="mb-3">
-            <h1 style="font-size:1.6rem; font-weight:700;">Banking Management System</h1>
-            <p style="color:var(--text-muted); font-size:0.9rem;">Select your role to continue</p>
+<!-- Hero Section (45% Left / 55% Right) -->
+<section class="position-relative py-5 overflow-hidden">
+    <!-- Blurred Background Image Layer -->
+    <div style="position: absolute; inset: -20px; background: url('{{ url_for('static', filename='background-home.jpg') }}') center/cover no-repeat; filter: blur(14px) brightness(0.92); z-index: 1;"></div>
+    <!-- Soft Glassmorphism Contrast Tint -->
+    <div style="position: absolute; inset: 0; background: rgba(246, 244, 240, 0.55); z-index: 2;"></div>
+
+    <div class="container position-relative" style="z-index: 3;">
+        <div class="row align-items-center g-4 py-3">
+
+            <!-- Hero Left Copy (45%) in a Frosted Glass Card -->
+            <div class="col-lg-5">
+                <div class="p-4 p-md-4 rounded-4 shadow-sm" style="background: rgba(255, 255, 255, 0.88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.8);">
+                    <h1 class="fw-bold text-dark fs-2 mb-3" style="letter-spacing: -0.02em; line-height: 1.25;">
+                        NetBanking Portal &amp; Digital Services
+                    </h1>
+                    <p class="text-secondary small mb-4" style="line-height: 1.6;">
+                        Access your bank account, perform instant transfers, track transactions, and explore tailored high-yield banking schemes through our secure digital banking platform.
+                    </p>
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center gap-2 text-dark small mb-2">
+                            <i class="bi bi-check-circle-fill text-primary"></i> 24/7 Digital Account Access
+                        </div>
+                        <div class="d-flex align-items-center gap-2 text-dark small mb-2">
+                            <i class="bi bi-check-circle-fill text-primary"></i> Instant Deposit &amp; Withdrawal Processing
+                        </div>
+                        <div class="d-flex align-items-center gap-2 text-dark small">
+                            <i class="bi bi-check-circle-fill text-primary"></i> Tailored Scheme Recommendations
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
+                        <a href="{{ url_for('login', role='User') }}" class="btn btn-primary px-4 font-semibold">
+                            NetBanking Sign In
+                        </a>
+                        <a href="{{ url_for('register_user') }}" class="btn btn-outline-dark px-4 font-semibold">
+                            Open Account
+                        </a>
+                    </div>
+                    <div class="pt-2 border-top">
+                        <span class="text-muted extra-small">Banking Professional?</span>
+                        <a href="{{ url_for('login', role='PRO') }}" class="text-primary extra-small text-decoration-none font-semibold ms-1">
+                            PRO Sign In
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hero Right Integrated Tablet Showcase (55%) -->
+            <div class="col-lg-7">
+                <div class="tablet-wrapper">
+                    <div class="tablet-frame">
+                        <div class="tablet-camera-dot"></div>
+                        <div class="tablet-screen-content">
+                            <img src="{{ url_for('static', filename='dashboard_preview.png') }}" class="w-100 h-auto d-block" alt="Banking MS NetBanking Dashboard">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- Section 2: A Complete Digital Banking Workspace -->
+<section id="about" class="py-5 bg-white border-top border-bottom">
+    <div class="container py-2">
+
+        <div class="mb-4">
+            <h2 class="fw-bold text-dark fs-4 mb-2">A Complete Digital Banking Workspace</h2>
+            <p class="text-secondary small mb-0" style="max-width:640px;">
+                Banking MS brings customer banking, relationship management, and administrative operations into one unified system.
+            </p>
         </div>
 
-        <div class="row g-4 justify-content-center">
+        <div class="row g-4">
 
-            <div class="col-md-4 d-flex">
-                <div class="card w-100 d-flex flex-column">
-                    <div class="card-body d-flex flex-column text-center py-4">
-                        <h5 class="mb-1">Admin</h5>
-                        <p class="text-muted mb-0" style="font-size:0.82rem;">Manage users, PROs, accounts and banking operations.</p>
-                        <div class="mt-auto pt-4">
-                            <a href="{{ url_for('login', role='admin') }}" class="btn btn-dark w-100">Admin Login</a>
-                        </div>
+            <!-- Personal Banking -->
+            <div class="col-md-4">
+                <div class="p-4 rounded border bg-light h-100">
+                    <h3 class="fw-bold text-dark fs-6 mb-2">Personal Banking</h3>
+                    <p class="text-secondary small mb-3" style="line-height:1.5;">
+                        Customer self-service portal for managing accounts, reviewing available balances, performing deposit and withdrawal operations, and accessing scheme offers.
+                    </p>
+                    <ul class="list-unstyled text-secondary small mb-0">
+                        <li class="mb-1">&bull; Account & balance management</li>
+                        <li class="mb-1">&bull; Instant deposit & withdrawal</li>
+                        <li class="mb-1">&bull; Complete transaction history</li>
+                        <li>&bull; Scheme offer acceptance</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Professional Banking -->
+            <div class="col-md-4">
+                <div class="p-4 rounded border bg-light h-100">
+                    <h3 class="fw-bold text-dark fs-6 mb-2">Professional Banking</h3>
+                    <p class="text-secondary small mb-3" style="line-height:1.5;">
+                        Dedicated workspace for relationship managers to inspect assigned customer accounts, monitor transaction ledgers, and recommend tailored banking schemes.
+                    </p>
+                    <ul class="list-unstyled text-secondary small mb-0">
+                        <li class="mb-1">&bull; Customer roster management</li>
+                        <li class="mb-1">&bull; Financial activity review</li>
+                        <li class="mb-1">&bull; Scheme recommendation engine</li>
+                        <li>&bull; Recommendation status tracking</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Administration -->
+            <div class="col-md-4">
+                <div class="p-4 rounded border bg-light h-100">
+                    <h3 class="fw-bold text-dark fs-6 mb-2">Administration</h3>
+                    <p class="text-secondary small mb-3" style="line-height:1.5;">
+                        Centralized governance portal for system administrators to manage users, approve PRO applications, control account statuses, and configure banking schemes.
+                    </p>
+                    <ul class="list-unstyled text-secondary small mb-0">
+                        <li class="mb-1">&bull; User & account status controls</li>
+                        <li class="mb-1">&bull; PRO registration approvals</li>
+                        <li class="mb-1">&bull; Scheme interest & balance rules</li>
+                        <li>&bull; Platform security governance</li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+<!-- Section 3: Banking Services & Resources -->
+<section id="services" class="py-5" style="background:#F6F4F0;">
+    <div class="container py-2">
+
+        <div class="mb-4">
+            <h2 class="fw-bold text-dark fs-4 mb-2">Banking Services & Resources</h2>
+            <p class="text-secondary small mb-0">Overview of available banking categories and services.</p>
+        </div>
+
+        <div class="row g-4">
+
+            <!-- Banking Services -->
+            <div class="col-md-4">
+                <div class="bg-white p-4 rounded border">
+                    <h4 class="fw-bold text-dark fs-6 mb-3 border-bottom pb-2">Banking</h4>
+                    <div class="d-flex flex-column gap-2 text-secondary small">
+                        <span>&bull; NetBanking Portal</span>
+                        <span>&bull; Customer Accounts</span>
+                        <span>&bull; Transaction Ledger</span>
+                        <span>&bull; Funds Deposit & Withdrawal</span>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-4 d-flex">
-                <div class="card w-100 d-flex flex-column">
-                    <div class="card-body d-flex flex-column text-center py-4">
-                        <h5 class="mb-1">PR Officer</h5>
-                        <p class="text-muted mb-0" style="font-size:0.82rem;">Manage assigned customer accounts and banking schemes.</p>
-                        <div class="mt-auto pt-4 d-grid gap-2">
-                            <a href="{{ url_for('login', role='PRO') }}" class="btn btn-primary">PRO Login</a>
-                            <a href="{{ url_for('register_pro') }}" class="btn btn-outline-primary">Register as PRO</a>
-                        </div>
+            <!-- Financial Services -->
+            <div class="col-md-4">
+                <div class="bg-white p-4 rounded border">
+                    <h4 class="fw-bold text-dark fs-6 mb-3 border-bottom pb-2">Financial Services</h4>
+                    <div class="d-flex flex-column gap-2 text-secondary small">
+                        <span>&bull; High-Yield Banking Schemes</span>
+                        <span>&bull; Interest Rate Calculations</span>
+                        <span>&bull; PRO Scheme Recommendations</span>
+                        <span>&bull; Account Governance Rules</span>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-4 d-flex">
-                <div class="card w-100 d-flex flex-column">
-                    <div class="card-body d-flex flex-column text-center py-4">
-                        <h5 class="mb-1">User</h5>
-                        <p class="text-muted mb-0" style="font-size:0.82rem;">Manage your account, transactions and banking schemes.</p>
-                        <div class="mt-auto pt-4 d-grid gap-2">
-                            <a href="{{ url_for('login', role='User') }}" class="btn btn-success">User Login</a>
-                            <a href="{{ url_for('register_user') }}" class="btn btn-outline-success">Register as User</a>
-                        </div>
+            <!-- Support & Assistance -->
+            <div class="col-md-4">
+                <div class="bg-white p-4 rounded border">
+                    <h4 class="fw-bold text-dark fs-6 mb-3 border-bottom pb-2">Support & Assistance</h4>
+                    <div class="d-flex flex-column gap-2 text-secondary small">
+                        <span>&bull; Customer Service Desk</span>
+                        <span>&bull; Relationship Manager Contact</span>
+                        <span>&bull; Portal Access Support</span>
+                        <span>&bull; Security & Privacy Guidelines</span>
                     </div>
                 </div>
             </div>
@@ -63,7 +216,30 @@
         </div>
 
     </div>
-</div>
+</section>
+
+<!-- Restrained Institutional Footer -->
+<footer class="py-4 bg-white border-top">
+    <div class="container">
+        <div class="row align-items-center g-3 text-secondary small">
+            <div class="col-md-6">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Logo" style="width: 20px; height: 20px; border-radius: 4px;">
+                    <strong class="text-dark">Banking MS</strong>
+                </div>
+                <span>&copy; 2026 Banking Management System. Regulated Digital Banking Services.</span>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <div class="d-flex flex-wrap gap-3 justify-content-md-end">
+                    <a href="#about" class="text-secondary text-decoration-none">About</a>
+                    <a href="#services" class="text-secondary text-decoration-none">Help</a>
+                    <a href="{{ url_for('login', role='User') }}" class="text-secondary text-decoration-none">Customer Banking</a>
+                    <a href="{{ url_for('login', role='PRO') }}" class="text-secondary text-decoration-none">PRO Portal</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 

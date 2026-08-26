@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash, session
 from flask_login import login_user,logout_user,login_required,current_user
 from app import app
 from functools import wraps
@@ -175,33 +175,33 @@ def login(role):
     if role.lower() == "admin":
         admin = Admin.query.filter_by(admin_email=email).first()
 
-        if admin and check_password_hash(admin.admin_password,password):
+        if admin and check_password_hash(admin.admin_password, password):
             if not admin.is_active:
-                flash("Admin account is inactive.", "danger")
-                return redirect(url_for("login", role="Admin"))
+                return render_template("auth/login.html", role=role, login_error="Admin account is inactive.")
 
             login_user(admin)
+            session.pop('_flashes', None)
             return redirect(url_for("admin_dashboard"))
 
-        flash("Invalid admin email or password.", "danger")
-        return redirect(url_for("login", role="admin"))
+        return render_template("auth/login.html", role=role, login_error="Invalid admin email or password.")
 
     if role == "pro":
         pro = PRO.query.filter_by(email=email).first()
 
         if pro is None or not check_password_hash(pro.password, password):
-            return render_template("auth/login.html",role=role,login_error="Invalid email or password.")
+            return render_template("auth/login.html", role=role, login_error="Invalid email or password.")
 
         if not pro.is_approved:
-            return render_template("auth/login.html",role=role,login_error="Your PRO account is awaiting admin approval.")
+            return render_template("auth/login.html", role=role, login_error="Your PRO account is awaiting admin approval.")
 
         if pro.is_blacklisted:
-            return render_template("auth/login.html",role=role,login_error="Your PRO account has been blacklisted.")
+            return render_template("auth/login.html", role=role, login_error="Your PRO account has been blacklisted.")
 
         if not pro.is_active:
-            return render_template("auth/login.html",role=role,login_error="Your PRO account is inactive.")
+            return render_template("auth/login.html", role=role, login_error="Your PRO account is inactive.")
 
         login_user(pro)
+        session.pop('_flashes', None)
 
         return redirect(url_for("pro_dashboard"))
     if role.lower() == "user":
@@ -232,6 +232,7 @@ def login(role):
             )
 
         login_user(user)
+        session.pop('_flashes', None)
 
         return redirect(url_for("user_dashboard"))
     return "Login for this role is not implemented yet."
@@ -258,13 +259,19 @@ def admin_dashboard():
         status="Active"
     ).count()
 
+    pending_pro_requests = PRO.query.filter_by(
+        is_approved=False,
+        is_blacklisted=False
+    ).all()
+
     return render_template(
         "admin/dashboard.html",
         total_users=total_users,
         active_users=active_users,
         total_pros=total_pros,
         pending_pros=pending_pros,
-        active_schemes=active_schemes
+        active_schemes=active_schemes,
+        pending_pro_requests=pending_pro_requests
     )
 
 @app.route("/admin/users")
@@ -413,6 +420,66 @@ def admin_update_account_status(user_id):
     flash(f"Account status updated to {status}.", "success")
     return redirect(url_for("admin_users"))
 
+
+@app.route("/admin/users/<int:user_id>/edit", methods=["GET", "POST"])
+@admin_required
+def edit_user_by_admin(user_id):
+    user = User.query.get_or_404(user_id)
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip()
+        if not name or not email:
+            flash("Name and email are required.", "danger")
+            return redirect(url_for("edit_user_by_admin", user_id=user.user_id))
+
+        existing = User.query.filter(User.email == email, User.user_id != user.user_id).first()
+        if existing:
+            flash("Email is already taken by another user.", "danger")
+            return redirect(url_for("edit_user_by_admin", user_id=user.user_id))
+
+        user.name = name
+        user.email = email
+        db.session.commit()
+        flash("User profile updated successfully.", "success")
+        return redirect(url_for("admin_users"))
+
+    return render_template("admin/edit_user.html", user=user)
+
+
+@app.route("/admin/pros/<int:pro_id>/edit", methods=["GET", "POST"])
+@admin_required
+def edit_pro_by_admin(pro_id):
+    pro = PRO.query.get_or_404(pro_id)
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip()
+        contact_number = request.form.get("contact_number", "").strip()
+        experience = request.form.get("experience", "0").strip()
+
+        if not name or not email or not contact_number:
+            flash("Name, email, and contact number are required.", "danger")
+            return redirect(url_for("edit_pro_by_admin", pro_id=pro.pro_id))
+
+        existing = PRO.query.filter(PRO.email == email, PRO.pro_id != pro.pro_id).first()
+        if existing:
+            flash("Email is already taken by another PRO.", "danger")
+            return redirect(url_for("edit_pro_by_admin", pro_id=pro.pro_id))
+
+        pro.name = name
+        pro.email = email
+        pro.contact_number = contact_number
+        try:
+            pro.experience = int(experience)
+        except ValueError:
+            pro.experience = 0
+
+        db.session.commit()
+        flash("PRO profile updated successfully.", "success")
+        return redirect(url_for("manage_pros"))
+
+    return render_template("admin/edit_pro.html", pro=pro)
+
+
 @app.route("/user/dashboard")
 @login_required
 def user_dashboard():
@@ -484,13 +551,24 @@ def pro_dashboard():
         status="Rejected"
     ).count()
 
+    recent_customers = User.query.filter_by(
+        assigned_pro_id=current_user.pro_id,
+        is_active=True
+    ).limit(5).all()
+
+    recent_recommendations = UserScheme.query.filter_by(
+        assigned_by_pro=current_user.pro_id
+    ).order_by(UserScheme.assigned_date.desc()).limit(5).all()
+
     return render_template(
         "pro/dashboard.html",
         pro=current_user,
         assigned_customers=assigned_customers,
         pending_recommendations=pending_recommendations,
         accepted_recommendations=accepted_recommendations,
-        rejected_recommendations=rejected_recommendations
+        rejected_recommendations=rejected_recommendations,
+        recent_customers=recent_customers,
+        recent_recommendations=recent_recommendations
     )
 
 @app.route("/pro/customers")
@@ -1036,4 +1114,24 @@ def reject_scheme(user_scheme_id):
 
     flash("Scheme recommendation rejected.", "info")
     return redirect(url_for("user_schemes"))
+
+
+@app.route("/profile")
+@login_required
+def view_profile():
+    if current_user.role == "user":
+        account = BankAccount.query.filter_by(user_id=current_user.user_id).first()
+        pro = PRO.query.get(current_user.assigned_pro_id) if current_user.assigned_pro_id else None
+        active_user_scheme = UserScheme.query.filter_by(user_id=current_user.user_id, status="Accepted").first()
+        active_scheme = BankingScheme.query.get(active_user_scheme.scheme_id) if active_user_scheme else None
+        return render_template("profile.html", user=current_user, account=account, pro=pro, active_scheme=active_scheme)
+
+    elif current_user.role == "pro":
+        assigned_customers_count = User.query.filter_by(assigned_pro_id=current_user.pro_id).count()
+        return render_template("profile.html", pro=current_user, assigned_customers_count=assigned_customers_count)
+
+    elif current_user.role == "admin":
+        return render_template("profile.html", admin=current_user)
+
+    return redirect(url_for("home"))
 

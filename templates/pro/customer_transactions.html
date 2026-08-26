@@ -2,57 +2,74 @@
 
 {% block content %}
 
-<div class="container mt-5">
-
-    <h2>{{ user.name }} - Transactions</h2>
-
-    <p><strong>Account Number:</strong> {{ user.bank_account.account_number }}</p>
-    <p><strong>Current Balance:</strong> ₹{{ "%.2f"|format(user.bank_account.balance) }}</p>
-
-    {% if transactions %}
-
-    <table class="table table-bordered table-striped mt-4">
-
-        <thead>
-            <tr>
-                <th>Transaction ID</th>
-                <th>Type</th>
-                <th>Amount</th>
-                <th>Balance After</th>
-                <th>Date</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-
-        <tbody>
-
-            {% for transaction in transactions %}
-
-            <tr>
-                <td>{{ transaction.transaction_id }}</td>
-                <td>{{ transaction.transaction_type }}</td>
-                <td>₹{{ "%.2f"|format(transaction.amount) }}</td>
-                <td>₹{{ "%.2f"|format(transaction.balance_after_transaction) }}</td>
-                <td>{{ transaction.transaction_date.strftime("%d-%m-%Y %H:%M") }}</td>
-                <td>{{ transaction.status }}</td>
-            </tr>
-
-            {% endfor %}
-
-        </tbody>
-
-    </table>
-
-    {% else %}
-
-    <div class="alert alert-info mt-4">
-        No transactions found for this customer.
+<div class="page-header">
+    <div>
+        <h2 class="page-title">{{ user.name }}'s Transactions</h2>
+        <p class="page-subtitle">Account #{{ user.bank_account.account_number }} &bull; Balance: ₹{{ "{:,.2f}".format(user.bank_account.balance) }}</p>
     </div>
-
-    {% endif %}
-
-    <a href="{{ url_for('pro_customer_details', user_id=user.user_id) }}" class="btn btn-secondary mt-3">← Back to Customer</a>
-
+    <a href="{{ url_for('pro_customer_details', user_id=user.user_id) }}" class="btn btn-outline-secondary btn-sm">
+        Back to Profile
+    </a>
 </div>
 
-{% endblock %}
+<div class="dashboard-card">
+    <div class="dashboard-card-header">
+        <h3 class="dashboard-card-title">
+            <i class="bi bi-clock-history text-primary"></i> Customer Transaction History
+        </h3>
+    </div>
+    <div class="dashboard-card-body p-0">
+        {% if transactions %}
+        <div class="table-responsive">
+            <table class="banking-table">
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Balance After</th>
+                        <th>Date & Time</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transaction in transactions %}
+                    <tr>
+                        <td class="txn-ref">TXN-{{ "%05d"|format(transaction.transaction_id) }}</td>
+                        <td>
+                            {% if transaction.transaction_type == "Deposit" %}
+                                <span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold">Deposit</span>
+                            {% elif transaction.transaction_type == "Withdrawal" %}
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-semibold">Withdrawal</span>
+                            {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary">{{ transaction.transaction_type }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if transaction.transaction_type == "Deposit" %}
+                                <span class="amount-deposit">+ ₹{{ "{:,.2f}".format(transaction.amount) }}</span>
+                            {% else %}
+                                <span class="amount-withdrawal">&minus; ₹{{ "{:,.2f}".format(transaction.amount) }}</span>
+                            {% endif %}
+                        </td>
+                        <td>₹{{ "{:,.2f}".format(transaction.balance_after_transaction) }}</td>
+                        <td class="text-muted small">{{ transaction.transaction_date.strftime("%d %b %Y, %H:%M") }}</td>
+                        <td>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle">{{ transaction.status }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-receipt empty-state-icon"></i>
+            <h5 class="fw-bold text-dark mb-1">No Transactions Found</h5>
+            <p class="text-muted small mb-0">This customer has no recorded transaction history.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

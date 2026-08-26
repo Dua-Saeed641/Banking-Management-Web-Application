@@ -2,166 +2,206 @@
 
 {% block content %}
 
-<div class="container mt-5">
+<div class="page-header">
+    <div>
+        <h2 class="page-title">{{ pro.name }}</h2>
+        <p class="page-subtitle">PRO Profile Details &bull; Code: <strong>{{ pro.employee_code or "Unassigned" }}</strong></p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('edit_pro_by_admin', pro_id=pro.pro_id) }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-pencil me-1"></i> Edit Profile
+        </a>
+        <a href="{{ url_for('manage_pros') }}" class="btn btn-outline-secondary btn-sm">
+            Back to Manage PROs
+        </a>
+    </div>
+</div>
 
-    <h2>PRO Details</h2>
-
-    <div class="card mt-4">
-
-        <div class="card-body">
-
-            <h4>{{ pro.name }}</h4>
-
-            <hr>
-
-            <p><strong>Email:</strong> {{ pro.email }}</p>
-
-            <p><strong>Employee Code:</strong> {{ pro.employee_code or "Not Assigned" }}</p>
-
-            <p><strong>Contact Number:</strong> {{ pro.contact_number }}</p>
-
-            <p><strong>Experience:</strong> {{ pro.experience }} years</p>
-
-            <p><strong>Joining Date:</strong> {{ pro.joining_date.strftime("%d-%m-%Y") }}</p>
-
-            <p>
-                <strong>Approval:</strong>
-                {% if pro.is_approved %}
-                <span class="badge bg-success">Approved</span>
-                {% else %}
-                <span class="badge bg-warning text-dark">Pending</span>
-                {% endif %}
-            </p>
-
-            <p>
-                <strong>Status:</strong>
-                {% if pro.is_blacklisted %}
-                <span class="badge bg-danger">Blacklisted</span>
-                {% elif pro.is_active %}
-                <span class="badge bg-success">Active</span>
-                {% else %}
-                <span class="badge bg-secondary">Inactive</span>
-                {% endif %}
-            </p>
-
+<div class="row g-4 mb-4">
+    <!-- PRO Profile Overview Card -->
+    <div class="col-lg-6">
+        <div class="dashboard-card">
+            <div class="dashboard-card-header">
+                <h3 class="dashboard-card-title">
+                    <i class="bi bi-briefcase-fill text-primary"></i> Professional Overview
+                </h3>
+            </div>
+            <div class="dashboard-card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <span class="text-muted small d-block">Email Address</span>
+                        <strong class="text-dark">{{ pro.email }}</strong>
+                    </div>
+                    <div class="col-6">
+                        <span class="text-muted small d-block">Employee Code</span>
+                        <span class="txn-ref">{{ pro.employee_code or "Not Assigned" }}</span>
+                    </div>
+                    <div class="col-6">
+                        <span class="text-muted small d-block">Contact Number</span>
+                        <span class="text-dark">{{ pro.contact_number }}</span>
+                    </div>
+                    <div class="col-6">
+                        <span class="text-muted small d-block">Experience</span>
+                        <span class="badge bg-light text-secondary border">{{ pro.experience }} Years</span>
+                    </div>
+                    <div class="col-6">
+                        <span class="text-muted small d-block">Joining Date</span>
+                        <span class="text-muted small">{{ pro.joining_date.strftime("%d %b %Y") }}</span>
+                    </div>
+                    <div class="col-6">
+                        <span class="text-muted small d-block">Approval Status</span>
+                        {% if pro.is_approved %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle">Approved</span>
+                        {% else %}
+                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Pending</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-12">
+                        <span class="text-muted small d-block mb-1">Account Access Status</span>
+                        {% if pro.is_blacklisted %}
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Blacklisted</span>
+                        {% elif pro.is_active %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
+                        {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary">Inactive</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
         </div>
-
     </div>
 
-    <div class="card mt-4">
+    <!-- Recommendation Statistics Card -->
+    <div class="col-lg-6">
+        <div class="dashboard-card">
+            <div class="dashboard-card-header">
+                <h3 class="dashboard-card-title">
+                    <i class="bi bi-bar-chart-fill text-primary"></i> Recommendation Statistics
+                </h3>
+            </div>
+            <div class="dashboard-card-body">
+                <div class="row g-3 text-center">
+                    <div class="col-4">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <span class="text-muted small d-block">Total</span>
+                            <strong class="fs-4 text-dark">{{ total }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 bg-success-subtle bg-opacity-25 rounded-3 border border-success-subtle">
+                            <span class="text-success small d-block fw-semibold">Accepted</span>
+                            <strong class="fs-4 text-success">{{ accepted }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 bg-warning-subtle bg-opacity-25 rounded-3 border border-warning-subtle">
+                            <span class="text-warning-emphasis small d-block fw-semibold">Pending</span>
+                            <strong class="fs-4 text-warning-emphasis">{{ total - accepted - rejected - replaced }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 bg-light rounded-3 border">
+                            <span class="text-muted small">Rejected: <strong>{{ rejected }}</strong></span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 bg-light rounded-3 border">
+                            <span class="text-muted small">Replaced: <strong>{{ replaced }}</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-        <div class="card-body">
-
-            <h5>Assigned Customers</h5>
-
-            <p><strong>Total Customers:</strong> {{ pro.customers|length }}</p>
-
-            {% if pro.customers %}
-
-            <table class="table table-bordered table-striped mt-3">
-
+<!-- Assigned Customers Table -->
+<div class="dashboard-card mb-4">
+    <div class="dashboard-card-header">
+        <h3 class="dashboard-card-title">
+            <i class="bi bi-people-fill text-primary"></i> Assigned Customers ({{ pro.customers|length }})
+        </h3>
+    </div>
+    <div class="dashboard-card-body p-0">
+        {% if pro.customers %}
+        <div class="table-responsive">
+            <table class="banking-table">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Email</th>
+                        <th>Customer Name</th>
+                        <th>Email Address</th>
                         <th>Status</th>
                     </tr>
                 </thead>
-
                 <tbody>
-
                     {% for customer in pro.customers %}
                     <tr>
-                        <td>{{ customer.name }}</td>
-                        <td>{{ customer.email }}</td>
+                        <td><strong class="text-dark">{{ customer.name }}</strong></td>
+                        <td class="text-secondary small">{{ customer.email }}</td>
                         <td>
                             {% if customer.is_active %}
-                            <span class="badge bg-success">Active</span>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
                             {% else %}
-                            <span class="badge bg-danger">Blacklisted</span>
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Blacklisted</span>
                             {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
-
                 </tbody>
-
             </table>
-
-            {% else %}
-
-            <p class="text-muted">No customers assigned.</p>
-
-            {% endif %}
-
         </div>
-
+        {% else %}
+        <div class="p-4 text-center text-muted">No customers currently assigned to this PRO.</div>
+        {% endif %}
     </div>
+</div>
 
-    <div class="card mt-4">
-
-        <div class="card-body">
-
-            <h5>Recommendation Statistics</h5>
-
-            <p><strong>Total Recommendations:</strong> {{ total }}</p>
-            <p><strong>Accepted:</strong> {{ accepted }}</p>
-            <p><strong>Rejected:</strong> {{ rejected }}</p>
-            <p><strong>Replaced:</strong> {{ replaced }}</p>
-            <p><strong>Pending:</strong> {{ total - accepted - rejected - replaced }}</p>
-
-            {% if recommendations %}
-
-            <table class="table table-bordered table-striped mt-3">
-
+<!-- Recommendation History Table -->
+<div class="dashboard-card">
+    <div class="dashboard-card-header">
+        <h3 class="dashboard-card-title">
+            <i class="bi bi-star-fill text-warning"></i> Recommendation Ledger
+        </h3>
+    </div>
+    <div class="dashboard-card-body p-0">
+        {% if recommendations %}
+        <div class="table-responsive">
+            <table class="banking-table">
                 <thead>
                     <tr>
                         <th>Customer</th>
-                        <th>Scheme</th>
-                        <th>Date</th>
+                        <th>Scheme Name</th>
+                        <th>Assigned Date</th>
                         <th>Status</th>
                     </tr>
                 </thead>
-
                 <tbody>
-
                     {% for rec in recommendations %}
                     <tr>
-                        <td>{{ rec.user.name }}</td>
+                        <td><strong class="text-dark">{{ rec.user.name }}</strong></td>
                         <td>{{ rec.scheme.scheme_name }}</td>
-                        <td>{{ rec.assigned_date.strftime("%d-%m-%Y") }}</td>
+                        <td class="text-muted small">{{ rec.assigned_date.strftime("%d %b %Y") }}</td>
                         <td>
                             {% if rec.status == "Accepted" %}
-                            <span class="badge bg-success">Accepted</span>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle">Accepted</span>
                             {% elif rec.status == "Replaced" %}
-                            <span class="badge bg-warning text-dark">Replaced</span>
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Replaced</span>
                             {% elif rec.status == "Rejected" %}
-                            <span class="badge bg-danger">Rejected</span>
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Rejected</span>
                             {% else %}
-                            <span class="badge bg-secondary">{{ rec.status }}</span>
+                                <span class="badge bg-secondary-subtle text-secondary">{{ rec.status }}</span>
                             {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
-
                 </tbody>
-
             </table>
-
-            {% else %}
-
-            <p class="text-muted">No recommendations made yet.</p>
-
-            {% endif %}
-
         </div>
-
+        {% else %}
+        <div class="p-4 text-center text-muted">No scheme recommendations recorded for this PRO.</div>
+        {% endif %}
     </div>
-
-    <div class="mt-4">
-        <a href="{{ url_for('manage_pros') }}" class="btn btn-secondary">← Back to Manage PROs</a>
-    </div>
-
 </div>
 
 {% endblock %}
+

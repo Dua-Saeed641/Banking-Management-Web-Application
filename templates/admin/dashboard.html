@@ -2,78 +2,177 @@
 
 {% block content %}
 
-<h2 class="mb-4">Admin Dashboard</h2>
+<!-- LEVEL 1 — Page Heading -->
+<div class="mb-4">
+    <h2 class="fw-bold text-dark fs-3 mb-1">Welcome back, {{ current_user.admin_name }}</h2>
+    <p class="text-secondary small mb-0">Manage users, banking professionals, and banking schemes.</p>
+</div>
 
+<!-- Pending Actions Notification (if applicable) -->
+{% if pending_pros > 0 %}
+<div class="p-3 mb-4 rounded-2 border border-warning-subtle bg-warning-subtle d-flex align-items-center justify-content-between">
+    <span class="text-dark small font-medium">
+        <i class="bi bi-exclamation-circle-fill me-2 text-warning-emphasis"></i>
+        <strong>{{ pending_pros }}</strong> PRO registration request(s) awaiting review.
+    </span>
+    <a href="{{ url_for('pro_requests') }}" class="mgmt-card-action text-dark font-bold">Review Requests</a>
+</div>
+{% endif %}
+
+<!-- LEVEL 2 — Compact Summary Cards -->
 <div class="row g-3 mb-4">
 
+    <!-- Card 1: USERS -->
     <div class="col-md-4">
-        <div class="card shadow-sm stat-card">
-            <div class="card-body">
-                <h5>Total Users</h5>
-                <h3>{{ total_users }}</h3>
-                <p>Active: {{ active_users }}</p>
+        <div class="summary-metric-card">
+            <div>
+                <div class="metric-label">Users</div>
+                <div class="metric-value">{{ total_users }}</div>
+                <div class="metric-subtext mb-2">Total users</div>
+            </div>
+            <div class="metric-subtext">
+                <span class="text-success fw-semibold">&bull; {{ active_users }} Active</span>
             </div>
         </div>
     </div>
 
+    <!-- Card 2: BANKING PROFESSIONALS -->
     <div class="col-md-4">
-        <div class="card shadow-sm stat-card">
-            <div class="card-body">
-                <h5>Total PROs</h5>
-                <h3>{{ total_pros }}</h3>
-                <p>Pending Requests: {{ pending_pros }}</p>
+        <div class="summary-metric-card">
+            <div>
+                <div class="metric-label">Banking Professionals</div>
+                <div class="metric-value">{{ total_pros }}</div>
+                <div class="metric-subtext mb-2">Total professionals</div>
+            </div>
+            <div class="metric-subtext">
+                <span class="text-warning-emphasis fw-semibold">&bull; {{ pending_pros }} Pending</span>
             </div>
         </div>
     </div>
 
+    <!-- Card 3: BANKING SCHEMES -->
     <div class="col-md-4">
-        <div class="card shadow-sm stat-card">
-            <div class="card-body">
-                <h5>Active Schemes</h5>
-                <h3>{{ active_schemes }}</h3>
-                <p>&nbsp;</p>
+        <div class="summary-metric-card">
+            <div>
+                <div class="metric-label">Banking Schemes</div>
+                <div class="metric-value">{{ active_schemes }}</div>
+                <div class="metric-subtext mb-2">Active schemes</div>
+            </div>
+            <div class="metric-subtext">
+                <span class="text-secondary fw-semibold">&bull; Configured & Active</span>
             </div>
         </div>
     </div>
 
 </div>
 
+<!-- LEVEL 3 — Management Workspace (2 x 2 Grid) -->
+<div class="mb-2">
+    <h3 class="fw-bold text-dark fs-5 mb-1">Management</h3>
+    <p class="text-secondary small mb-3">Manage the core areas of the banking system.</p>
+</div>
+
 <div class="row g-3 mb-4">
 
+    <!-- Management Card 1: User Accounts -->
     <div class="col-md-6">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h5 class="mb-3">User Status</h5>
-                <canvas id="userChart" height="200"></canvas>
+        <a href="{{ url_for('admin_users') }}" class="mgmt-card">
+            <div>
+                <div class="mgmt-card-title">
+                    <i class="bi bi-people-fill mgmt-card-icon"></i> User Accounts
+                </div>
+                <div class="mgmt-card-desc mb-0">
+                    Manage customer accounts, account status, blacklist controls and PRO assignments.
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Management Card 2: Banking Professionals -->
+    <div class="col-md-6">
+        <a href="{{ url_for('manage_pros') }}" class="mgmt-card">
+            <div>
+                <div class="mgmt-card-title">
+                    <i class="bi bi-briefcase-fill mgmt-card-icon"></i> Banking Professionals
+                </div>
+                <div class="mgmt-card-desc mb-0">
+                    Review professionals, assignments and blacklist status.
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Management Card 3: Banking Schemes -->
+    <div class="col-md-6">
+        <a href="{{ url_for('admin_schemes') }}" class="mgmt-card">
+            <div>
+                <div class="mgmt-card-title">
+                    <i class="bi bi-card-checklist mgmt-card-icon"></i> Banking Schemes
+                </div>
+                <div class="mgmt-card-desc mb-0">
+                    Configure banking products, interest rates and minimum balance requirements.
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Management Card 4: PRO Applications -->
+    <div class="col-md-6">
+        <a href="{{ url_for('pro_requests') }}" class="mgmt-card">
+            <div>
+                <div class="mgmt-card-title">
+                    <i class="bi bi-clock-history mgmt-card-icon"></i> PRO Applications
+                </div>
+                <div class="mgmt-card-desc mb-0">
+                    Review and approve pending professional registration requests.
+                </div>
+            </div>
+        </a>
+    </div>
+
+</div>
+
+<!-- LEVEL 4 — System Analytics & Data Charts (STRICTLY BELOW MANAGEMENT) -->
+<div class="mb-2">
+    <h3 class="fw-bold text-dark fs-5 mb-1">System Analytics</h3>
+    <p class="text-secondary small mb-3">User distribution and platform overview metrics.</p>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="dashboard-card">
+            <div class="dashboard-card-header">
+                <h3 class="dashboard-card-title">
+                    <i class="bi bi-pie-chart-fill text-primary"></i> User Status Distribution
+                </h3>
+            </div>
+            <div class="dashboard-card-body d-flex justify-content-center align-items-center">
+                <div style="max-width: 260px; width: 100%;">
+                    <canvas id="userChart" height="200"></canvas>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h5 class="mb-3">Overview</h5>
+    <div class="col-lg-6">
+        <div class="dashboard-card">
+            <div class="dashboard-card-header">
+                <h3 class="dashboard-card-title">
+                    <i class="bi bi-bar-chart-line-fill text-primary"></i> System Overview Metrics
+                </h3>
+            </div>
+            <div class="dashboard-card-body">
                 <canvas id="overviewChart" height="200"></canvas>
             </div>
         </div>
     </div>
-
-</div>
-
-<hr class="my-3">
-
-<div class="d-flex flex-wrap gap-2">
-    <a href="{{ url_for('admin_users') }}" class="btn btn-primary">Manage Users</a>
-    <a href="{{ url_for('pro_requests') }}" class="btn btn-primary">PRO Requests</a>
-    <a href="{{ url_for('manage_pros') }}" class="btn btn-primary">Manage PROs</a>
-    <a href="{{ url_for('admin_schemes') }}" class="btn btn-primary">Manage Schemes</a>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-const primaryBlue = '#2563eb';
-const lightBlue   = '#93c5fd';
-const gray        = '#e5e7eb';
+const primaryBlue = '#1d4ed8';
+const lightBlue   = '#60a5fa';
+const gray        = '#e2e8f0';
 
 new Chart(document.getElementById('userChart'), {
     type: 'doughnut',
@@ -86,8 +185,20 @@ new Chart(document.getElementById('userChart'), {
         }]
     },
     options: {
-        plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 12 } } } },
-        cutout: '65%'
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    usePointStyle: true,
+                    pointStyle: 'rectRounded',
+                    boxWidth: 12,
+                    boxHeight: 12,
+                    padding: 16,
+                    font: { family: 'Inter', size: 12 }
+                }
+            }
+        },
+        cutout: '68%'
     }
 });
 
@@ -107,10 +218,14 @@ new Chart(document.getElementById('overviewChart'), {
         plugins: { legend: { display: false } },
         scales: {
             x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 } } },
-            y: { grid: { color: '#f3f4f6' }, ticks: { font: { family: 'Inter', size: 11 }, stepSize: 1 }, beginAtZero: true }
+            y: { grid: { color: '#f1f5f9' }, ticks: { font: { family: 'Inter', size: 11 }, stepSize: 1 }, beginAtZero: true }
         }
     }
 });
 </script>
 
 {% endblock %}
+
+
+
+
