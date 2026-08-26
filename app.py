@@ -17,22 +17,19 @@ def create_app():
         static_folder="static"
     )
 
-    environment = os.getenv(
-        "ENV",
-        "development"
-    )
+    environment = os.getenv("ENV", "development")
 
     if environment == "production":
         print("Starting Production...")
         app.config.from_object(ProductionConfig)
-
-        if not app.config.get("SQLALCHEMY_DATABASE_URI"):
-            raise RuntimeError("DATABASE_URL must be set in production.")
-        if not app.config.get("SECRET_KEY"):
-            raise RuntimeError("SECRET_KEY must be set in production.")
     else:
         print("Starting Local Development...")
         app.config.from_object(LocalDevelopmentConfig)
+
+    app.secret_key = app.config.get(
+        "SECRET_KEY",
+        os.getenv("SECRET_KEY", "local-development-secret-key")
+    )
 
     db.init_app(app)
     login_manager.init_app(app)
@@ -47,14 +44,13 @@ app = create_app()
 def load_user(user_id):
     try:
         role, actual_id = user_id.split("-")
-        actual_id = int(actual_id)
 
         if role == "admin":
-            return db.session.get(Admin, actual_id)
+            return db.session.get(Admin, int(actual_id))
         elif role == "pro":
-            return db.session.get(PRO, actual_id)
+            return db.session.get(PRO, int(actual_id))
         elif role == "user":
-            return db.session.get(User, actual_id)
+            return db.session.get(User, int(actual_id))
     except (ValueError, TypeError):
         return None
 
