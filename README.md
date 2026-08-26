@@ -1,4 +1,4 @@
-# Banking Management System
+# Netbanking Management System
 
 A full-stack banking management web application simulating core NetBanking functionality, relationship officer management, and enterprise banking governance. Built with Python, Flask, Flask-SQLAlchemy, and modern UI design system standards.
 
