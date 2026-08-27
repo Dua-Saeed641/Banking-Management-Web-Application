@@ -25,3 +25,7 @@ db_directory/*.sqlite3
 .DS_Store
 .idea/
 .vscode/
+
+# One-time maintenance / migration scripts (not part of the app)
+fix_render_db.py
+fix_*.py
