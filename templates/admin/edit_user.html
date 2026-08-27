@@ -14,10 +14,30 @@
             <input type="text" name="name" class="form-control" value="{{ user.name }}" required>
         </div>
 
-        <div class="mb-4">
+        <div class="mb-3">
             <label class="form-label fw-semibold text-dark">Email Address</label>
             <input type="email" name="email" class="form-control" value="{{ user.email }}" required>
         </div>
+
+        {% if user.bank_account %}
+        <div class="mb-4">
+            <label class="form-label fw-semibold text-dark">Bank Account Balance (₹)</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light text-muted">₹</span>
+                <input
+                    type="number"
+                    name="balance"
+                    class="form-control"
+                    value="{{ '{:.2f}'.format(user.bank_account.balance) }}"
+                    min="0"
+                    max="999999999.99"
+                    step="0.01"
+                    required
+                >
+            </div>
+            <div class="form-text extra-small text-muted">Account No: {{ user.bank_account.account_number }} &bull; Max limit: ₹99,99,99,999.99</div>
+        </div>
+        {% endif %}
 
         <div class="d-flex gap-2">
             <button type="submit" class="btn btn-primary px-4 font-semibold">

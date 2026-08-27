@@ -8,33 +8,60 @@
     <p class="text-secondary small mb-0">Account Overview &amp; NetBanking Workspace</p>
 </div>
 
-<!-- Metrics Row (Matching Screenshot Columns) -->
-<div class="row g-4 mb-4">
+<!-- Metrics Row (Responsive Summary Cards) -->
+<div class="row g-3 mb-4">
     <div class="col-md-4">
-        <div class="text-secondary small font-medium mb-1">Available Balance</div>
-        <div class="fs-2 fw-bold text-dark" style="letter-spacing: -0.02em;">₹{{ "{:,.2f}".format(account.balance) }}</div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="text-secondary small font-medium mb-1">Account Details</div>
-        <div class="d-flex align-items-center gap-2">
-            <span class="font-monospace fw-bold text-dark">#{{ account.account_number[-4:] if account.account_number|length >= 12 else account.account_number }}</span>
-            {% if account.status == "Active" %}
-                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-0.5 small">&bull; Active</span>
-            {% else %}
-                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-0.5 small">{{ account.status }}</span>
-            {% endif %}
+        <div class="summary-metric-card h-100">
+            <div>
+                <div class="metric-label mb-1">Available Balance</div>
+                <div class="metric-balance fw-bold text-dark" style="word-break: break-word; overflow-wrap: anywhere; font-variant-numeric: tabular-nums;">
+                    ₹{{ "{:,.2f}".format(account.balance) }}
+                </div>
+            </div>
+            <div class="metric-subtext mt-2">
+                <span class="text-muted">Account Currency: INR (₹)</span>
+            </div>
         </div>
     </div>
 
     <div class="col-md-4">
-        <div class="text-secondary small font-medium mb-1">Active Banking Scheme</div>
-        <div class="text-dark font-medium">
-            {% if account.scheme %}
-                <strong class="text-dark">{{ account.scheme.scheme_name }}</strong> <span class="text-success small">({{ account.scheme.interest_rate }}%)</span>
-            {% else %}
-                <span class="text-secondary">Default (Min. ₹{{ "{:,.0f}".format(account.minimum_balance) }})</span>
-            {% endif %}
+        <div class="summary-metric-card h-100">
+            <div>
+                <div class="metric-label mb-1">Account Details</div>
+                <div class="d-flex align-items-center gap-2 mt-2">
+                    <span class="font-monospace fw-bold text-dark fs-5">#{{ account.account_number[-4:] if account.account_number|length >= 12 else account.account_number }}</span>
+                    {% if account.status == "Active" %}
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-0.5 small">&bull; Active</span>
+                    {% else %}
+                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-0.5 small">{{ account.status }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="metric-subtext mt-2">
+                <span class="text-muted font-monospace">{{ account.account_number }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="summary-metric-card h-100">
+            <div>
+                <div class="metric-label mb-1">Active Banking Scheme</div>
+                <div class="text-dark font-medium mt-2">
+                    {% if account.scheme %}
+                        <strong class="text-dark fs-6">{{ account.scheme.scheme_name }}</strong> <span class="text-success small fw-semibold">({{ account.scheme.interest_rate }}% p.a.)</span>
+                    {% else %}
+                        <span class="text-secondary fs-6">Default Scheme</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="metric-subtext mt-2">
+                {% if account.scheme %}
+                    <span class="text-muted">Min. Req: ₹{{ "{:,.2f}".format(account.scheme.minimum_balance_required) }}</span>
+                {% else %}
+                    <span class="text-muted">Min. Req: ₹{{ "{:,.2f}".format(account.minimum_balance) }}</span>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
@@ -87,18 +114,18 @@
             <table class="banking-table">
                 <thead>
                     <tr>
-                        <th class="text-uppercase extra-small text-muted fw-bold">REFERENCE</th>
-                        <th class="text-uppercase extra-small text-muted fw-bold">TYPE</th>
-                        <th class="text-uppercase extra-small text-muted fw-bold text-end">AMOUNT</th>
-                        <th class="text-uppercase extra-small text-muted fw-bold text-end">BALANCE AFTER</th>
-                        <th class="text-uppercase extra-small text-muted fw-bold">DATE &amp; TIME</th>
+                        <th class="text-uppercase extra-small text-muted fw-bold text-nowrap">REFERENCE</th>
+                        <th class="text-uppercase extra-small text-muted fw-bold text-nowrap">TYPE</th>
+                        <th class="text-uppercase extra-small text-muted fw-bold text-end text-nowrap">AMOUNT</th>
+                        <th class="text-uppercase extra-small text-muted fw-bold text-end text-nowrap">BALANCE AFTER</th>
+                        <th class="text-uppercase extra-small text-muted fw-bold text-nowrap">DATE &amp; TIME</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for transaction in recent_transactions %}
                     <tr>
-                        <td class="font-monospace fw-bold text-dark">TXN-{{ "%05d"|format(transaction.transaction_id) }}</td>
-                        <td>
+                        <td class="font-monospace fw-bold text-dark text-nowrap">TXN-{{ "%05d"|format(transaction.transaction_id) }}</td>
+                        <td class="text-nowrap">
                             {% if transaction.transaction_type == "Deposit" %}
                                 <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Deposit</span>
                             {% elif transaction.transaction_type == "Withdrawal" %}
@@ -107,15 +134,15 @@
                                 <span class="badge bg-secondary-subtle text-secondary px-2 py-1">{{ transaction.transaction_type }}</span>
                             {% endif %}
                         </td>
-                        <td class="text-end font-semibold">
+                        <td class="text-end font-semibold text-nowrap" style="font-variant-numeric: tabular-nums;">
                             {% if transaction.transaction_type == "Deposit" %}
                                 <span class="text-success">+ ₹{{ "{:,.2f}".format(transaction.amount) }}</span>
                             {% else %}
                                 <span class="text-danger">&minus; ₹{{ "{:,.2f}".format(transaction.amount) }}</span>
                             {% endif %}
                         </td>
-                        <td class="text-end font-semibold text-dark">₹{{ "{:,.2f}".format(transaction.balance_after_transaction) }}</td>
-                        <td class="text-muted small">{{ transaction.transaction_date.strftime("%d %b %Y, %H:%M") }}</td>
+                        <td class="text-end font-semibold text-dark text-nowrap" style="font-variant-numeric: tabular-nums; word-break: break-word;">₹{{ "{:,.2f}".format(transaction.balance_after_transaction) }}</td>
+                        <td class="text-muted small text-nowrap">{{ transaction.transaction_date.strftime("%d %b %Y, %H:%M") }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

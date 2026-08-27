@@ -24,19 +24,19 @@
             <table class="banking-table">
                 <thead>
                     <tr>
-                        <th>Reference</th>
-                        <th>Type</th>
-                        <th>Amount</th>
-                        <th>Balance After</th>
-                        <th>Date & Time</th>
-                        <th>Status</th>
+                        <th class="text-nowrap">Reference</th>
+                        <th class="text-nowrap">Type</th>
+                        <th class="text-nowrap text-end">Amount</th>
+                        <th class="text-nowrap text-end">Balance After</th>
+                        <th class="text-nowrap">Date & Time</th>
+                        <th class="text-nowrap">Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for transaction in transactions %}
                     <tr>
-                        <td class="txn-ref">TXN-{{ "%05d"|format(transaction.transaction_id) }}</td>
-                        <td>
+                        <td class="txn-ref text-nowrap">TXN-{{ "%05d"|format(transaction.transaction_id) }}</td>
+                        <td class="text-nowrap">
                             {% if transaction.transaction_type == "Deposit" %}
                                 <span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold">Deposit</span>
                             {% elif transaction.transaction_type == "Withdrawal" %}
@@ -45,16 +45,16 @@
                                 <span class="badge bg-secondary-subtle text-secondary">{{ transaction.transaction_type }}</span>
                             {% endif %}
                         </td>
-                        <td>
+                        <td class="text-end text-nowrap" style="font-variant-numeric: tabular-nums;">
                             {% if transaction.transaction_type == "Deposit" %}
                                 <span class="amount-deposit">+ ₹{{ "{:,.2f}".format(transaction.amount) }}</span>
                             {% else %}
                                 <span class="amount-withdrawal">&minus; ₹{{ "{:,.2f}".format(transaction.amount) }}</span>
                             {% endif %}
                         </td>
-                        <td>₹{{ "{:,.2f}".format(transaction.balance_after_transaction) }}</td>
-                        <td class="text-muted small">{{ transaction.transaction_date.strftime("%d %b %Y, %H:%M") }}</td>
-                        <td>
+                        <td class="text-end text-nowrap font-semibold text-dark" style="font-variant-numeric: tabular-nums; word-break: break-word;">₹{{ "{:,.2f}".format(transaction.balance_after_transaction) }}</td>
+                        <td class="text-muted small text-nowrap">{{ transaction.transaction_date.strftime("%d %b %Y, %H:%M") }}</td>
+                        <td class="text-nowrap">
                             <span class="badge bg-success-subtle text-success border border-success-subtle">{{ transaction.status }}</span>
                         </td>
                     </tr>

@@ -269,5 +269,42 @@ class TestE2ELifecycle(unittest.TestCase):
         self.assertEqual(res_pro_to_admin.status_code, 403)
 
 
+        # Step 13: Admin edits user balance and profile
+        admin_client.post('/login/admin', data={
+            'email': 'admin@bank.com',
+            'password': 'Admin@123'
+        }, follow_redirects=True)
+
+        res_admin_edit = admin_client.post(f'/admin/users/{user.user_id}/edit', data={
+            'name': 'Dua Saeed Updated',
+            'email': 'dua_updated@example.com',
+            'balance': '15000.00'
+        }, follow_redirects=True)
+        self.assertEqual(res_admin_edit.status_code, 200)
+        db.session.refresh(user)
+        db.session.refresh(account)
+        self.assertEqual(user.name, 'Dua Saeed Updated')
+        self.assertEqual(account.balance, 15000.0)
+
+        # Unfreeze account for transactions
+        admin_client.post(f'/admin/users/{user.user_id}/account-status', data={'status': 'Active'}, follow_redirects=True)
+        db.session.refresh(account)
+        self.assertEqual(account.status, 'Active')
+
+        # Sequential withdrawals test
+        user_client.post('/login/user', data={'email': 'dua_updated@example.com', 'password': 'Password@123'}, follow_redirects=True)
+        user_client.post('/user/withdraw', data={'amount': '1000.00'}, follow_redirects=True)
+        db.session.refresh(account)
+        self.assertEqual(account.balance, 14000.0)
+
+        user_client.post('/user/withdraw', data={'amount': '500.00'}, follow_redirects=True)
+        db.session.refresh(account)
+        self.assertEqual(account.balance, 13500.0)
+
+        # Step 14: Over-limit transaction rejection
+        res_over_deposit = user_client.post('/user/deposit', data={'amount': '200000000.00'}, follow_redirects=True)
+        self.assertIn(b"maximum", res_over_deposit.data.lower())
+
+
 if __name__ == '__main__':
     unittest.main()

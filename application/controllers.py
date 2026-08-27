@@ -299,15 +299,26 @@ def add_scheme():
     minimum_balance = request.form["minimum_balance"]
     interest_rate = request.form["interest_rate"]
 
-    if not scheme_name or not description:
-        flash("Please fill in all required fields.", "danger")
+    try:
+        min_bal = round(float(minimum_balance), 2)
+        rate = round(float(interest_rate), 2)
+    except (ValueError, TypeError):
+        flash("Invalid minimum balance or interest rate.", "danger")
+        return redirect(url_for("add_scheme"))
+
+    if min_bal < 0 or min_bal > 999999999.99:
+        flash("Minimum balance must be between ₹0 and ₹99,99,99,999.99.", "danger")
+        return redirect(url_for("add_scheme"))
+
+    if rate < 0 or rate > 100:
+        flash("Interest rate must be between 0% and 100%.", "danger")
         return redirect(url_for("add_scheme"))
 
     scheme = BankingScheme(
         scheme_name=scheme_name,
         description=description,
-        minimum_balance_required=float(minimum_balance),
-        interest_rate=float(interest_rate),
+        minimum_balance_required=min_bal,
+        interest_rate=rate,
         status="Active"
     )
 
@@ -325,10 +336,31 @@ def edit_scheme(scheme_id):
     if request.method == "GET":
         return render_template("admin/edit_scheme.html", scheme=scheme)
 
-    scheme.scheme_name = request.form["scheme_name"].strip()
-    scheme.description = request.form["description"].strip()
-    scheme.minimum_balance_required = float(request.form["minimum_balance"])
-    scheme.interest_rate = float(request.form["interest_rate"])
+    scheme_name = request.form["scheme_name"].strip()
+    description = request.form["description"].strip()
+    if not scheme_name or not description:
+        flash("Please fill in all required fields.", "danger")
+        return redirect(url_for("edit_scheme", scheme_id=scheme_id))
+
+    try:
+        min_bal = round(float(request.form["minimum_balance"]), 2)
+        rate = round(float(request.form["interest_rate"]), 2)
+    except (ValueError, TypeError):
+        flash("Invalid minimum balance or interest rate.", "danger")
+        return redirect(url_for("edit_scheme", scheme_id=scheme_id))
+
+    if min_bal < 0 or min_bal > 999999999.99:
+        flash("Minimum balance must be between ₹0 and ₹99,99,99,999.99.", "danger")
+        return redirect(url_for("edit_scheme", scheme_id=scheme_id))
+
+    if rate < 0 or rate > 100:
+        flash("Interest rate must be between 0% and 100%.", "danger")
+        return redirect(url_for("edit_scheme", scheme_id=scheme_id))
+
+    scheme.scheme_name = scheme_name
+    scheme.description = description
+    scheme.minimum_balance_required = min_bal
+    scheme.interest_rate = rate
 
     db.session.commit()
 
@@ -439,6 +471,22 @@ def edit_user_by_admin(user_id):
 
         user.name = name
         user.email = email
+
+        balance_str = request.form.get("balance")
+        if balance_str is not None and user.bank_account:
+            try:
+                new_balance = round(float(balance_str), 2)
+                if new_balance < 0:
+                    flash("Balance cannot be negative.", "danger")
+                    return redirect(url_for("edit_user_by_admin", user_id=user.user_id))
+                if new_balance > 999_999_999.99:
+                    flash("Balance exceeds maximum limit of ₹99,99,99,999.99.", "danger")
+                    return redirect(url_for("edit_user_by_admin", user_id=user.user_id))
+                user.bank_account.balance = new_balance
+            except (ValueError, TypeError):
+                flash("Invalid balance value.", "danger")
+                return redirect(url_for("edit_user_by_admin", user_id=user.user_id))
+
         db.session.commit()
         flash("User profile updated successfully.", "success")
         return redirect(url_for("admin_users"))
@@ -870,7 +918,7 @@ def deposit():
 
     amount = request.form.get("amount")
     try:
-        amount = float(amount)
+        amount = round(float(amount), 2)
     except (TypeError, ValueError):
         return render_template(
             "user/deposit.html",
@@ -885,7 +933,21 @@ def deposit():
             deposit_error="Deposit amount must be greater than zero."
         )
 
-    account.balance += amount
+    if amount > 100000000.0:
+        return render_template(
+            "user/deposit.html",
+            account=account,
+            deposit_error="Maximum deposit amount per transaction is ₹10,00,00,000.00."
+        )
+
+    if account.balance + amount > 999999999.99:
+        return render_template(
+            "user/deposit.html",
+            account=account,
+            deposit_error="Deposit exceeds the maximum allowable account balance limit of ₹99,99,99,999.99."
+        )
+
+    account.balance = round(account.balance + amount, 2)
     transaction = Transaction(
         account_id=account.account_id,
         transaction_type="Deposit",
@@ -899,7 +961,7 @@ def deposit():
     db.session.add(transaction)
     db.session.commit()
 
-    flash(f"₹{amount:.2f} deposited successfully.", "success")
+    flash(f"₹{amount:,.2f} deposited successfully.", "success")
     return redirect(url_for("user_dashboard"))
 
 @app.route("/user/withdraw", methods=["GET", "POST"])
@@ -931,22 +993,26 @@ def user_withdraw():
 
     if request.method == "POST":
         try:
-            amount = float(request.form.get("amount", 0))
-        except ValueError:
+            amount = round(float(request.form.get("amount", 0)), 2)
+        except (ValueError, TypeError):
             amount = 0
 
         if amount <= 0:
             flash("Enter a valid withdrawal amount.", "danger")
             return redirect(url_for("user_withdraw"))
 
-        if account.balance - amount < effective_minimum:
+        if amount > 100000000.0:
+            flash("Maximum withdrawal limit per transaction is ₹10,00,00,000.00.", "danger")
+            return redirect(url_for("user_withdraw"))
+
+        if round(account.balance - amount, 2) < effective_minimum:
             flash(
-                f"Withdrawal denied. Minimum balance of ₹{effective_minimum:.2f} must be maintained.",
+                f"Withdrawal denied. Minimum balance of ₹{effective_minimum:,.2f} must be maintained.",
                 "danger"
             )
             return redirect(url_for("user_withdraw"))
 
-        account.balance -= amount
+        account.balance = round(account.balance - amount, 2)
         account.last_transaction_date = datetime.now(timezone.utc)
 
         transaction = Transaction(
@@ -960,7 +1026,7 @@ def user_withdraw():
         db.session.add(transaction)
         db.session.commit()
 
-        flash("Amount withdrawn successfully.", "success")
+        flash(f"₹{amount:,.2f} withdrawn successfully.", "success")
         return redirect(url_for("transaction_history"))
 
     return render_template(
