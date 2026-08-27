@@ -1,7 +1,8 @@
 from application.database import db
 from flask_login import UserMixin
-from datetime import datetime 
+from datetime import datetime
 from datetime import timezone
+from sqlalchemy import CheckConstraint
 
 
 class Admin(UserMixin, db.Model):
@@ -59,8 +60,19 @@ class PRO(UserMixin, db.Model):
 
     recommended_schemes = db.relationship("UserScheme",backref="pro",foreign_keys="UserScheme.assigned_by_pro")
 
+# Maximum balance allowed in any account (₹99,99,999.99)
+MAX_ACCOUNT_BALANCE = 9_999_999.99
+# Maximum amount per single transaction (₹10,00,000.00)
+MAX_TRANSACTION_AMOUNT = 1_000_000.00
+
+
 class BankAccount(db.Model):
     __tablename__ = "bank_accounts"
+    __table_args__ = (
+        CheckConstraint('balance >= 0', name='ck_balance_non_negative'),
+        CheckConstraint(f'balance <= {MAX_ACCOUNT_BALANCE}', name='ck_balance_max'),
+        CheckConstraint('minimum_balance >= 0', name='ck_min_balance_non_negative'),
+    )
 
     account_id = db.Column(db.Integer,primary_key=True,autoincrement=True)
     user_id = db.Column(db.Integer,db.ForeignKey("users.user_id"),unique=True,nullable=False)
@@ -80,6 +92,11 @@ class BankAccount(db.Model):
 class Transaction(db.Model):
 
     __tablename__ = "transactions"
+    __table_args__ = (
+        CheckConstraint('amount > 0', name='ck_txn_amount_positive'),
+        CheckConstraint(f'amount <= {MAX_TRANSACTION_AMOUNT}', name='ck_txn_amount_max'),
+        CheckConstraint('balance_after_transaction >= 0', name='ck_txn_balance_non_negative'),
+    )
 
     transaction_id = db.Column(db.Integer,primary_key=True,autoincrement=True)
     account_id = db.Column(db.Integer,db.ForeignKey("bank_accounts.account_id"),nullable=False)
