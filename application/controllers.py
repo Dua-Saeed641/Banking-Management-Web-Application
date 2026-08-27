@@ -933,18 +933,21 @@ def deposit():
             deposit_error="Deposit amount must be greater than zero."
         )
 
-    if amount > 100000000.0:
+    MAX_TXN = 1_000_000.00
+    MAX_BAL = 9_999_999.99
+
+    if amount > MAX_TXN:
         return render_template(
             "user/deposit.html",
             account=account,
-            deposit_error="Maximum deposit amount per transaction is ₹10,00,00,000.00."
+            deposit_error=f"Maximum deposit per transaction is ₹{MAX_TXN:,.2f}."
         )
 
-    if account.balance + amount > 999999999.99:
+    if account.balance + amount > MAX_BAL:
         return render_template(
             "user/deposit.html",
             account=account,
-            deposit_error="Deposit exceeds the maximum allowable account balance limit of ₹99,99,99,999.99."
+            deposit_error=f"Deposit exceeds the maximum account balance limit of ₹{MAX_BAL:,.2f}."
         )
 
     account.balance = round(account.balance + amount, 2)
@@ -959,7 +962,15 @@ def deposit():
     account.last_transaction_date = datetime.now(timezone.utc)
 
     db.session.add(transaction)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        return render_template(
+            "user/deposit.html",
+            account=account,
+            deposit_error="Transaction rejected: amount would exceed the maximum allowed balance."
+        )
 
     flash(f"₹{amount:,.2f} deposited successfully.", "success")
     return redirect(url_for("user_dashboard"))
@@ -1001,8 +1012,10 @@ def user_withdraw():
             flash("Enter a valid withdrawal amount.", "danger")
             return redirect(url_for("user_withdraw"))
 
-        if amount > 100000000.0:
-            flash("Maximum withdrawal limit per transaction is ₹10,00,00,000.00.", "danger")
+        MAX_TXN = 1_000_000.00
+
+        if amount > MAX_TXN:
+            flash(f"Maximum withdrawal per transaction is ₹{MAX_TXN:,.2f}.", "danger")
             return redirect(url_for("user_withdraw"))
 
         if round(account.balance - amount, 2) < effective_minimum:
@@ -1024,7 +1037,12 @@ def user_withdraw():
         )
 
         db.session.add(transaction)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            flash("Transaction failed. Please try again.", "danger")
+            return redirect(url_for("user_withdraw"))
 
         flash(f"₹{amount:,.2f} withdrawn successfully.", "success")
         return redirect(url_for("transaction_history"))
