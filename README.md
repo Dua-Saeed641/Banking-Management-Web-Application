@@ -2,6 +2,10 @@
 
 A full-stack banking management web application simulating core NetBanking functionality, relationship officer management, and enterprise banking governance. Built with Python, Flask, Flask-SQLAlchemy, and modern UI design system standards.
 
+🔗 **Live Demo**: [netbanking-web-application-3.onrender.com](https://netbanking-web-application-3.onrender.com)
+
+> ⚠️ Hosted on Render's free tier — the app may take ~30 seconds to wake up on first visit.
+
 ---
 
 ## Overview
